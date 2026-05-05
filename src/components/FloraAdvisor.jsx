@@ -24,6 +24,29 @@ const QUICK_REPLIES = [
   "I have a bad headache that won't go away",
 ];
 
+const STATIC_RESPONSES = {
+  "What should I eat this trimester?":
+    "In the first trimester, folate is your best friend — it supports your baby's neural tube development. Think leafy greens, lentils, black beans, and fortified foods. If nausea is making things hard, go for small, bland meals: toast, rice, ginger tea, or congee. In the second trimester, iron and calcium become more important as your blood volume expands. By the third, add more protein and vitamin D. What trimester are you in? I can give you more specific suggestions.",
+  "Foods from my culture that help with iron?":
+    "So many traditional foods are iron powerhouses! A few examples: collard greens and black-eyed peas (Southern/West African), lentil dal (South Asian), callaloo (Caribbean), mchicha/amaranth greens (East African), black beans (Latin American), and egusi seeds (West African). The key with plant-based iron is pairing it with vitamin C — like a squeeze of lemon or tomato — to boost absorption. What cultural background do you cook from? I'd love to get more specific.",
+  "I have nausea — what can I eat?":
+    "First trimester nausea is so hard — you need to eat but everything sounds terrible. A few things that tend to help: cold foods (nausea is often triggered by smell, and cold foods have less aroma), small frequent meals instead of big ones, plain starchy foods like toast, crackers, rice, or plain congee, and ginger in any form — tea, candied ginger, or ginger ale. Sour flavors like lemon can also help settle the stomach. What time of day is your nausea worst?",
+  "Is my baby getting enough nutrients?":
+    "During pregnancy, your baby takes what it needs from you first — which is why your own nutrition matters so much. The nutrients to watch most are folate (neural tube, especially in T1), iron (blood volume and oxygen delivery), calcium and vitamin D (bone development), and DHA omega-3 (brain and eye development). Are you taking a prenatal vitamin? That's the best safety net. Is there a specific nutrient you're worried about? I can point you to the best food sources.",
+  "Foods that support breastfeeding?":
+    "Breast milk quality is remarkably stable even when your diet isn't perfect — your body prioritizes your baby. But to protect your own stores, focus on: omega-3 rich foods (fatty fish, walnuts, flaxseed) for milk DHA, iron-rich foods to replenish what you lost at birth, and stay well hydrated (aim for 13 cups of fluids daily). Some mothers find galactagogues — foods like oats, fenugreek, brewer's yeast, and moringa — help with supply, though the evidence is mixed. Are you also taking a postnatal vitamin?",
+  "I'm exhausted and don't know if it's normal":
+    "Yes — this kind of exhaustion is extremely common, especially in the first year. Interrupted sleep compounds over time in ways that hit harder than any single all-nighter. That said, exhaustion that feels crushing or doesn't improve with rest can be a sign of anemia or thyroid issues, both common postpartum. When did you last have bloodwork done? If it's been more than 6 weeks since delivery, it's worth asking your provider for a postpartum panel.",
+  "I have a bad headache that won't go away":
+    "A persistent headache after delivery — especially if it's severe, or comes with vision changes, swelling, or upper abdominal pain — is something I take seriously. Those can be signs of postpartum preeclampsia, which can develop up to 6 weeks after birth. If any of those symptoms are present alongside your headache, please contact your provider or go to the ER today. If it's more of a tension headache, check your water intake and sleep first. How long has it been going on?",
+  "i have anxiety and a killer headache":
+    "I'm so sorry you're dealing with both anxiety and a severe headache — that sounds really tough. Anxiety is incredibly common during pregnancy and postpartum, and when it comes with a bad headache, it's important to rule out any medical causes. A severe headache could be related to preeclampsia, especially if accompanied by vision changes, swelling, or abdominal pain. Please reach out to your healthcare provider today to discuss both symptoms. In the meantime, try some gentle anxiety-reducing practices like deep breathing or a short walk. Have you been able to talk to anyone about how you're feeling?",
+  "i have anxiety":
+    "Anxiety during pregnancy and postpartum is so common — you're not alone in this. Many mothers experience it due to hormonal changes, sleep disruption, and the big life changes happening. If it's interfering with your daily life or feels overwhelming, talking to your provider about it is a great step. They can help determine if it's something that might benefit from additional support. What kinds of things tend to trigger your anxiety right now?",
+  "killer headache":
+    "A severe headache, especially during pregnancy or postpartum, needs to be taken seriously. It could be related to preeclampsia, dehydration, or other factors. Please contact your healthcare provider or go to urgent care if it's accompanied by vision changes, swelling, nausea, or confusion. In the meantime, rest in a dark room and stay hydrated. How long has this been going on and what does it feel like?",
+};
+
 const findStaticResponse = (input) => {
   const normalizedInput = input.toLowerCase().trim();
   
@@ -54,27 +77,6 @@ const findStaticResponse = (input) => {
   }
   
   return null;
-};
-  "What should I eat this trimester?":
-    "In the first trimester, folate is your best friend — it supports your baby's neural tube development. Think leafy greens, lentils, black beans, and fortified foods. If nausea is making things hard, go for small, bland meals: toast, rice, ginger tea, or congee. In the second trimester, iron and calcium become more important as your blood volume expands. By the third, add more protein and vitamin D. What trimester are you in? I can give you more specific suggestions.",
-  "Foods from my culture that help with iron?":
-    "So many traditional foods are iron powerhouses! A few examples: collard greens and black-eyed peas (Southern/West African), lentil dal (South Asian), callaloo (Caribbean), mchicha/amaranth greens (East African), black beans (Latin American), and egusi seeds (West African). The key with plant-based iron is pairing it with vitamin C — like a squeeze of lemon or tomato — to boost absorption. What cultural background do you cook from? I'd love to get more specific.",
-  "I have nausea — what can I eat?":
-    "First trimester nausea is so hard — you need to eat but everything sounds terrible. A few things that tend to help: cold foods (nausea is often triggered by smell, and cold foods have less aroma), small frequent meals instead of big ones, plain starchy foods like toast, crackers, rice, or plain congee, and ginger in any form — tea, candied ginger, or ginger ale. Sour flavors like lemon can also help settle the stomach. What time of day is your nausea worst?",
-  "Is my baby getting enough nutrients?":
-    "During pregnancy, your baby takes what it needs from you first — which is why your own nutrition matters so much. The nutrients to watch most are folate (neural tube, especially in T1), iron (blood volume and oxygen delivery), calcium and vitamin D (bone development), and DHA omega-3 (brain and eye development). Are you taking a prenatal vitamin? That's the best safety net. Is there a specific nutrient you're worried about? I can point you to the best food sources.",
-  "Foods that support breastfeeding?":
-    "Breast milk quality is remarkably stable even when your diet isn't perfect — your body prioritizes your baby. But to protect your own stores, focus on: omega-3 rich foods (fatty fish, walnuts, flaxseed) for milk DHA, iron-rich foods to replenish what you lost at birth, and stay well hydrated (aim for 13 cups of fluids daily). Some mothers find galactagogues — foods like oats, fenugreek, brewer's yeast, and moringa — help with supply, though the evidence is mixed. Are you also taking a postnatal vitamin?",
-  "I'm exhausted and don't know if it's normal":
-    "Yes — this kind of exhaustion is extremely common, especially in the first year. Interrupted sleep compounds over time in ways that hit harder than any single all-nighter. That said, exhaustion that feels crushing or doesn't improve with rest can be a sign of anemia or thyroid issues, both common postpartum. When did you last have bloodwork done? If it's been more than 6 weeks since delivery, it's worth asking your provider for a postpartum panel.",
-  "I have a bad headache that won't go away":
-    "A persistent headache after delivery — especially if it's severe, or comes with vision changes, swelling, or upper abdominal pain — is something I take seriously. Those can be signs of postpartum preeclampsia, which can develop up to 6 weeks after birth. If any of those symptoms are present alongside your headache, please contact your provider or go to the ER today. If it's more of a tension headache, check your water intake and sleep first. How long has it been going on?",
-  "i have anxiety and a killer headache":
-    "I'm so sorry you're dealing with both anxiety and a severe headache — that sounds really tough. Anxiety is incredibly common during pregnancy and postpartum, and when it comes with a bad headache, it's important to rule out any medical causes. A severe headache could be related to preeclampsia, especially if accompanied by vision changes, swelling, or abdominal pain. Please reach out to your healthcare provider today to discuss both symptoms. In the meantime, try some gentle anxiety-reducing practices like deep breathing or a short walk. Have you been able to talk to anyone about how you're feeling?",
-  "i have anxiety":
-    "Anxiety during pregnancy and postpartum is so common — you're not alone in this. Many mothers experience it due to hormonal changes, sleep disruption, and the big life changes happening. If it's interfering with your daily life or feels overwhelming, talking to your provider about it is a great step. They can help determine if it's something that might benefit from additional support. What kinds of things tend to trigger your anxiety right now?",
-  "killer headache":
-    "A severe headache, especially during pregnancy or postpartum, needs to be taken seriously. It could be related to preeclampsia, dehydration, or other factors. Please contact your healthcare provider or go to urgent care if it's accompanied by vision changes, swelling, nausea, or confusion. In the meantime, rest in a dark room and stay hydrated. How long has this been going on and what does it feel like?",
 };
 
 export default function FloraAdvisor() {
