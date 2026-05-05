@@ -120,7 +120,7 @@ RULES:
         .map(m => ({ role: m.role === "flora" ? "assistant" : "user", content: m.text }));
 
       const stream = AnthropicClient.messages.stream({
-        model: "claude-sonnet-4-6",
+        model: "claude-3-5-sonnet-20241022",
         max_tokens: 400,
         system: SYSTEM_PROMPT,
         messages: history,
@@ -140,6 +140,20 @@ RULES:
       console.error(err);
       setStreaming(false);
       setStreamText("");
+      // Fallback to demo mode on API failure
+      const response = STATIC_RESPONSES[text] ||
+        `I hear you, ${mama.name || "Mama"}. That's worth paying attention to. Can you tell me a bit more about what's going on?`;
+      let i = 0;
+      const interval = setInterval(() => {
+        setStreamText(response.slice(0, i));
+        i += 4;
+        if (i > response.length) {
+          clearInterval(interval);
+          setStreamText("");
+          setStreaming(false);
+          dispatch({ type: "ADD_FLORA_MESSAGE", message: { id: Date.now()+1, role: "flora", text: response, timestamp: new Date().toISOString() } });
+        }
+      }, 18);
     }
   };
 
