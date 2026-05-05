@@ -18,10 +18,9 @@ const FEED_TYPES = ["Breast", "Formula", "Solid"];
 
 function IntakeBar({ label, unit, value, target, pct, nutrientKey }) {
   const navigate = useNavigate();
-  const c     = pct >= 80 ? "#1D9E75" : pct >= 50 ? "#F59E0B" : "#EF4444";
-  const bg    = pct >= 80 ? "#E1F5EE" : pct >= 50 ? "#FEF9C3" : "#FEF2F2";
-  const hint  = NUTRIENT_TIPS[nutrientKey];
-  const [expanded, setExpanded] = useState(false);
+  const c  = pct >= 80 ? "#1D9E75" : pct >= 50 ? "#F59E0B" : "#EF4444";
+  const bg = pct >= 80 ? "#E1F5EE" : pct >= 50 ? "#FEF9C3" : "#FEF2F2";
+  const hint = NUTRIENT_TIPS[nutrientKey];
 
   return (
     <div className="py-3 border-b border-gray-50 last:border-0">
@@ -43,30 +42,25 @@ function IntakeBar({ label, unit, value, target, pct, nutrientKey }) {
           style={{width: `${Math.min(pct, 100)}%`, background: c}}/>
       </div>
 
-      {/* Tip + expand */}
-      {pct < 80 && (
-        <button onClick={() => setExpanded(!expanded)} className="w-full text-left">
-          <p className="text-[10px] text-gray-400 leading-relaxed">{hint.tip}</p>
-          {expanded && (
-            <div className="mt-2 space-y-1">
-              {hint.foods.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {hint.foods.map((f) => (
-                    <span key={f} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{f}</span>
-                  ))}
-                </div>
-              )}
-              {hint.shop && (
-                <button onClick={(e) => { e.stopPropagation(); navigate(`/vitamins/${nutrientKey}`); }}
-                  className="flex items-center gap-1 text-[10px] text-[#534AB7] font-semibold mt-1">
-                  <ShoppingBag size={10}/> See supplement options →
-                </button>
-              )}
+      {/* Tip — always visible when under 80% */}
+      {pct < 80 ? (
+        <div className="space-y-1.5">
+          <p className="text-[10px] text-gray-500 leading-relaxed">{hint.tip}</p>
+          {hint.foods.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {hint.foods.map((f) => (
+                <span key={f} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{f}</span>
+              ))}
             </div>
           )}
-        </button>
-      )}
-      {pct >= 80 && (
+          {hint.shop && (
+            <button onClick={() => navigate(`/vitamins/${nutrientKey}`)}
+              className="flex items-center gap-1 text-[10px] text-[#534AB7] font-semibold">
+              <ShoppingBag size={10}/> See supplement options →
+            </button>
+          )}
+        </div>
+      ) : (
         <p className="text-[10px] text-[#1D9E75] font-medium">You're on track! Keep it up 🌿</p>
       )}
     </div>
@@ -220,8 +214,7 @@ export default function NutritionTracker() {
       )}
 
       {/* Nutrient intake bars */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-2 mb-4">
-        <p className="text-xs text-gray-400 pt-2 pb-1">Tap any bar under 100% for food ideas ↓</p>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 pt-2 pb-1 mb-4">
         {nutrients.map((n) => (
           <IntakeBar key={n.key} {...n} nutrientKey={n.key}/>
         ))}
@@ -263,25 +256,87 @@ export default function NutritionTracker() {
       </div>
 
       {/* Baby feeding (postpartum) */}
-      {isPostBirth && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
-          <h3 className="font-semibold text-gray-700 text-sm mb-1">
-            {baby.name}'s feeds today
-          </h3>
-          <p className="text-xs text-gray-400 mb-3">
-            {todayFeeds.length} logged
-            {lastFeed ? ` · Last: ${lastFeed.type} at ${new Date(lastFeed.timestamp).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}` : ""}
-          </p>
-          <div className="flex gap-2">
-            {FEED_TYPES.map((t) => (
-              <button key={t} onClick={() => dispatch({type:"LOG_FEED",feedType:t})}
-                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-[#E1F5EE] text-[#0F6E56] hover:bg-[#C6EDD9] transition-colors">
-                {t}
-              </button>
-            ))}
+      {isPostBirth && (() => {
+        const breastFeeds = todayFeeds.filter(f => f.type === "Breast");
+        const hasNutrition = (todayLog.calories || 0) > 0;
+
+        // Approximate nutrients baby receives per breastfeed (~150mL)
+        // Key ones that vary meaningfully with mama's diet: omega-3, folate, vitamin D
+        const perFeed = { omega3: 18, folate: 7, calcium: 48, vitaminD: 1.5, iron: 0.05 };
+        const feedBoost = breastFeeds.length;
+        const babyNutrients = [
+          { label: "Omega-3", val: Math.round(feedBoost * perFeed.omega3 * (1 + Math.min((todayLog.omega3 || 0) / 300, 1))), unit: "mg", benefit: "brain dev", good: feedBoost >= 1 && (todayLog.omega3 || 0) >= 100 },
+          { label: "Folate",  val: Math.round(feedBoost * perFeed.folate  * (1 + Math.min((todayLog.folate  || 0) / 500, 0.5))), unit: "mcg", benefit: "cell growth", good: feedBoost >= 1 && (todayLog.folate  || 0) >= 200 },
+          { label: "Calcium", val: Math.round(feedBoost * perFeed.calcium),  unit: "mg", benefit: "bone strength", good: feedBoost >= 1 },
+          { label: "Iron",    val: parseFloat((feedBoost * perFeed.iron).toFixed(2)), unit: "mg", benefit: "highly bioavailable", good: feedBoost >= 2 },
+          { label: "Vit D",   val: Math.round(feedBoost * perFeed.vitaminD), unit: "IU", benefit: "supplement baby separately", good: false },
+        ];
+
+        return (
+          <div className="mb-4 space-y-3">
+            {/* Log feed */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-700 text-sm">{baby.name}'s feeds today</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {todayFeeds.length} logged
+                    {lastFeed ? ` · Last: ${lastFeed.type} · ${new Date(lastFeed.timestamp).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}` : ""}
+                  </p>
+                </div>
+                <div className="text-2xl">{todayFeeds.length >= 6 ? "🌟" : todayFeeds.length >= 3 ? "🌿" : "🌱"}</div>
+              </div>
+              <div className="flex gap-2">
+                {FEED_TYPES.map((t) => (
+                  <button key={t} onClick={() => dispatch({type:"LOG_FEED",feedType:t})}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-[#E1F5EE] text-[#0F6E56] hover:bg-[#C6EDD9] transition-colors active:scale-95">
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Baby's nutrient share — shows when breast feeds logged */}
+            {breastFeeds.length > 0 && (
+              <div className="bg-gradient-to-br from-[#E1F5EE] to-[#EFF8FF] border border-[#A7DFC9] rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-lg">🍼</span>
+                  <div>
+                    <p className="text-xs font-semibold text-[#0F6E56]">
+                      What {baby.name} got from {breastFeeds.length} breast feed{breastFeeds.length !== 1 ? "s" : ""} today
+                    </p>
+                    <p className="text-[10px] text-[#1D9E75] mt-0.5">Your diet directly shapes your milk 💚</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {babyNutrients.map(({ label, val, unit, benefit, good }) => (
+                    <div key={label} className="flex items-center gap-3">
+                      <span className="text-[10px] text-[#0F6E56] font-semibold w-14 flex-shrink-0">{label}</span>
+                      <div className="flex-1">
+                        <div className="h-1.5 bg-white/60 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: good ? "75%" : "30%",
+                              background: good ? "#1D9E75" : label === "Vit D" ? "#F59E0B" : "#93C5FD",
+                            }}/>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-[#0F6E56] w-14 text-right flex-shrink-0">
+                        ~{val} {unit}
+                      </span>
+                      <span className="text-[9px] text-[#1D9E75] hidden sm:block flex-shrink-0">{benefit}</span>
+                    </div>
+                  ))}
+                </div>
+                {!hasNutrition && (
+                  <p className="text-[10px] text-[#1D9E75] mt-3 italic">Log your food above to see how your diet boosts these numbers ↑</p>
+                )}
+                <p className="text-[9px] text-[#1D9E75]/70 mt-2">Estimates based on avg. breastmilk composition · Vitamin D: always supplement baby (400 IU/day)</p>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Food modal */}
       {showFoodModal && (
