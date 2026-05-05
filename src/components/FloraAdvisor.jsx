@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Send } from "lucide-react";
 import { useAppState, useAppDispatch, STAGE_LABEL } from "../hooks/useAppState";
+import { FLORA_BASE_PROMPT, buildFloraContextAddition } from "../data/floraSystemPrompt";
 
 let AnthropicClient = null;
 try {
@@ -14,22 +15,28 @@ try {
 } catch {}
 
 const QUICK_REPLIES = [
+  "What should I eat this trimester?",
+  "Foods from my culture that help with iron?",
+  "I have nausea — what can I eat?",
+  "Is my baby getting enough nutrients?",
+  "Foods that support breastfeeding?",
   "I'm exhausted and don't know if it's normal",
-  "My baby isn't eating well",
-  "I think I might have postpartum depression",
-  "What vitamins should I be taking?",
   "I have a bad headache that won't go away",
 ];
 
 const STATIC_RESPONSES = {
+  "What should I eat this trimester?":
+    "In the first trimester, folate is your best friend — it supports your baby's neural tube development. Think leafy greens, lentils, black beans, and fortified foods. If nausea is making things hard, go for small, bland meals: toast, rice, ginger tea, or congee. In the second trimester, iron and calcium become more important as your blood volume expands. By the third, add more protein and vitamin D. What trimester are you in? I can give you more specific suggestions.",
+  "Foods from my culture that help with iron?":
+    "So many traditional foods are iron powerhouses! A few examples: collard greens and black-eyed peas (Southern/West African), lentil dal (South Asian), callaloo (Caribbean), mchicha/amaranth greens (East African), black beans (Latin American), and egusi seeds (West African). The key with plant-based iron is pairing it with vitamin C — like a squeeze of lemon or tomato — to boost absorption. What cultural background do you cook from? I'd love to get more specific.",
+  "I have nausea — what can I eat?":
+    "First trimester nausea is so hard — you need to eat but everything sounds terrible. A few things that tend to help: cold foods (nausea is often triggered by smell, and cold foods have less aroma), small frequent meals instead of big ones, plain starchy foods like toast, crackers, rice, or plain congee, and ginger in any form — tea, candied ginger, or ginger ale. Sour flavors like lemon can also help settle the stomach. What time of day is your nausea worst?",
+  "Is my baby getting enough nutrients?":
+    "During pregnancy, your baby takes what it needs from you first — which is why your own nutrition matters so much. The nutrients to watch most are folate (neural tube, especially in T1), iron (blood volume and oxygen delivery), calcium and vitamin D (bone development), and DHA omega-3 (brain and eye development). Are you taking a prenatal vitamin? That's the best safety net. Is there a specific nutrient you're worried about? I can point you to the best food sources.",
+  "Foods that support breastfeeding?":
+    "Breast milk quality is remarkably stable even when your diet isn't perfect — your body prioritizes your baby. But to protect your own stores, focus on: omega-3 rich foods (fatty fish, walnuts, flaxseed) for milk DHA, iron-rich foods to replenish what you lost at birth, and stay well hydrated (aim for 13 cups of fluids daily). Some mothers find galactagogues — foods like oats, fenugreek, brewer's yeast, and moringa — help with supply, though the evidence is mixed. Are you also taking a postnatal vitamin?",
   "I'm exhausted and don't know if it's normal":
     "Yes — this kind of exhaustion is extremely common, especially in the first year. Interrupted sleep compounds over time in ways that hit harder than any single all-nighter. That said, exhaustion that feels crushing or doesn't improve with rest can be a sign of anemia or thyroid issues, both common postpartum. When did you last have bloodwork done? If it's been more than 6 weeks since delivery, it's worth asking your provider for a postpartum panel.",
-  "My baby isn't eating well":
-    "That's one of the most stressful things to watch. Can you tell me a bit more — is this about refusing breast or bottle, or about solids? How old is your baby? Feeding issues look really different at 6 weeks vs 6 months. In the meantime: wet diapers are the best indicator that enough is getting in. If you're seeing fewer than 6 wet diapers a day, call your pediatrician today.",
-  "I think I might have postpartum depression":
-    "I'm really glad you said that out loud — that takes courage. What you're feeling is real, it's common (1 in 5 mothers), and it's treatable. PPD doesn't mean you're a bad mother. It means your brain chemistry shifted after birth and needs support. The Edinburgh check-in in Mama's Health can give you a starting score to share with your provider. Would you like to take it now? And if you ever feel like harming yourself, please text or call 988 — they're available 24/7.",
-  "What vitamins should I be taking?":
-    "Great question — and the answer depends on where you are in your journey. If you're pregnant: iron (27mg), folate (600mcg, ideally as methylfolate), Vitamin D (1000–2000 IU), and DHA omega-3. If you're postpartum and breastfeeding: keep everything up, bump calories by ~300, add a good prenatal or postnatal multi. The Vitamins tab has specific brands with Amazon links if you want to compare options. What stage are you in?",
   "I have a bad headache that won't go away":
     "A persistent headache after delivery — especially if it's severe, or comes with vision changes, swelling, or upper abdominal pain — is something I take seriously. Those can be signs of postpartum preeclampsia, which can develop up to 6 weeks after birth. If any of those symptoms are present alongside your headache, please contact your provider or go to the ER today. If it's more of a tension headache, check your water intake and sleep first. How long has it been going on?",
 };
@@ -56,9 +63,13 @@ export default function FloraAdvisor() {
   const babyAge    = baby.birthDay > 0 ? Math.max(0, currentDay - baby.birthDay) : 0;
   const doneCount  = baby.milestones.length;
 
-  const SYSTEM_PROMPT = `You are Flora, a maternal health companion built into the Bloom app. You support mothers through pregnancy and the first two years of their baby's life. You are warm, direct, and clinically informed — not clinical in tone. You speak like a trusted friend who happens to know a lot about maternal health.
+  const floraContext = useMemo(() => buildFloraContextAddition(), []);
 
-Context about this mother:
+  const SYSTEM_PROMPT = `${FLORA_BASE_PROMPT}
+
+${floraContext}
+
+APP STATE CONTEXT:
 - Name: ${mama.name || "Mama"}
 - Day ${currentDay} of 1,000 (${STAGE_LABEL(currentDay)})
 - Weeks pregnant: ${mama.weeksPregnant || 0} (0 = postpartum)
@@ -69,7 +80,7 @@ Context about this mother:
 - Baby age: ${babyAge} days old
 - Milestones completed: ${doneCount}
 
-Rules:
+RULES:
 - Never diagnose. Triage toward care: "This is worth mentioning to your provider."
 - For BP ≥ 140/90 or preeclampsia signs (headache + swelling + vision changes): "Please contact your provider or go to the ER today."
 - For any suicidal ideation: immediately provide 988 and affirm help is available.

@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppState, useAppDispatch, STAGE_LABEL, mamaStageFor, babyStageFor } from "../hooks/useAppState";
+import { getProfile, getCelebrationsShown, markCelebrationShown } from "../lib/profile";
+import { getDayOf1000, getGestationalWeeks, getStageLabel } from "../lib/gestationalAge";
+import ReminderBanner from "./ReminderBanner";
+import MilestoneCelebration from "./MilestoneCelebration";
 
 const GRASS = Array.from({ length: 32 }, (_, i) => ({
   x: i * 11.5 + 4, h: 6 + ((i * 7 + 3) % 9), dark: i % 4 === 0,
@@ -85,11 +89,41 @@ const QUICK_LINKS = [
   {label:"Milestones",emoji:"⭐", path:"/milestones",color:"mama"},
 ];
 
+function checkPendingCelebration(profile, currentDay) {
+  const shown = getCelebrationsShown();
+  const weeks = getGestationalWeeks(profile.confirmedPregnancyDate);
+  if (weeks !== null) {
+    if (weeks >= 13 && !shown.includes('t2')) return 't2';
+    if (weeks >= 27 && !shown.includes('t3')) return 't3';
+  }
+  if (currentDay >= 270 && !shown.includes('birth')) return 'birth';
+  if (currentDay >= 999 && !shown.includes('day1000')) return 'day1000';
+  return null;
+}
+
 export default function Garden() {
   const { currentDay, baby, mama, floraUnread } = useAppState();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [toast, setToast] = useState("");
+
+  const profile = useMemo(() => getProfile(), []);
+  const displayDay = useMemo(
+    () => profile.confirmedPregnancyDate
+      ? (getDayOf1000(profile.confirmedPregnancyDate) ?? currentDay)
+      : currentDay,
+    [profile, currentDay],
+  );
+  const stageLabel = useMemo(
+    () => getStageLabel(profile.confirmedPregnancyDate, profile.birthDate) || STAGE_LABEL(currentDay),
+    [profile, currentDay],
+  );
+  const motherName = profile.motherName || mama.name || null;
+  const babyName   = profile.babyName   || baby.name  || null;
+
+  const [pendingCelebration, setPendingCelebration] = useState(() =>
+    checkPendingCelebration(profile, displayDay)
+  );
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2200); };
 
@@ -102,16 +136,35 @@ export default function Garden() {
 
   return (
     <div className="px-4 pt-4 pb-2">
+      {pendingCelebration && (
+        <MilestoneCelebration
+          celebrationId={pendingCelebration}
+          onDismiss={() => {
+            markCelebrationShown(pendingCelebration);
+            setPendingCelebration(null);
+          }}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div>
           <h1 className="text-2xl font-bold text-[#0F6E56] tracking-tight leading-none">bloom</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Day {currentDay} of 1,000</p>
+          <p className="text-xs text-gray-400 mt-0.5">Day {displayDay} of your 1,000-day journey</p>
         </div>
         <span className="text-xs bg-[#E1F5EE] text-[#0F6E56] px-3 py-1 rounded-full font-semibold">
-          {STAGE_LABEL(currentDay)}
+          {stageLabel}
         </span>
       </div>
+
+      {motherName && (
+        <h2
+          className="text-xl font-bold text-[#0F6E56] mb-3 leading-tight"
+          style={{ fontFamily: 'Lora, Georgia, serif', fontSize: '20px' }}
+        >
+          {motherName}'s Garden
+        </h2>
+      )}
 
       {/* Garden scene */}
       <div className="rounded-2xl overflow-hidden shadow-md mb-3 border border-gray-100" style={{height:290}}>
@@ -182,19 +235,28 @@ export default function Garden() {
           <GardenPlant x={90}  stage={ms} color="#7F77DD"/>
           <GardenPlant x={270} stage={bs} color="#1D9E75"/>
 
-          {/* Labels */}
           <g filter="url(#drop-shadow)">
-            <text x="90"  y="277" textAnchor="middle" fontSize="10.5"
-              fill="#E9E2FF" fontFamily="DM Sans, system-ui, sans-serif" fontWeight="500">
-              ● {mama.name || "Mama"}
+            <rect x="40" y="261" width="100" height="18" rx="9" fill="#7F77DD" opacity="0.85"/>
+            <text x="90" y="274" textAnchor="middle" fontSize="11"
+              fill="white" fontFamily="Lora, Georgia, serif" fontWeight="600">
+              {motherName || "Mama"}
             </text>
-            <text x="270" y="277" textAnchor="middle" fontSize="10.5"
-              fill="#B2EDD5" fontFamily="DM Sans, system-ui, sans-serif" fontWeight="500">
-              {isPostBirth ? `● ${baby.name}` : "· · ·"}
+            <rect x="205" y="261" width="130" height="18" rx="9" fill="#1D9E75" opacity="0.85"/>
+            <text x="270" y="274" textAnchor="middle" fontSize="11"
+              fill="white" fontFamily="Lora, Georgia, serif" fontWeight="600">
+              {isPostBirth ? (babyName || "Your baby 🌱") : "· · ·"}
             </text>
           </g>
         </svg>
       </div>
+
+      {!isPostBirth && (
+        <div className="flex justify-end mb-2">
+          <span className="text-xs text-[#1D9E75] bg-[#E1F5EE] px-3 py-1 rounded-full font-medium">
+            {babyName ? `${babyName} · growing 🌱` : "Your baby 🌱 · growing"}
+          </span>
+        </div>
+      )}
 
       {/* Day slider */}
       <div className="mb-4 px-1">
@@ -215,6 +277,8 @@ export default function Garden() {
           ))}
         </div>
       </div>
+
+      <ReminderBanner />
 
       {/* Quick nav */}
       <div className="grid grid-cols-2 gap-2.5 mb-3">
