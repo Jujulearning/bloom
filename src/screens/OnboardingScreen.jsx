@@ -209,6 +209,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             <Field label="Your name">
               <input
+                name="motherName"
                 className={inputCls}
                 value={motherName}
                 onChange={e => setMotherName(e.target.value)}
@@ -218,6 +219,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             <Field label="Age" optional>
               <input
+                name="age"
                 type="number"
                 className={inputCls}
                 value={age}
@@ -229,7 +231,7 @@ export default function OnboardingScreen({ onComplete }) {
             </Field>
 
             <Field label="Race / ethnicity">
-              <select className={selectCls} value={raceEthnicity} onChange={e => setRaceEthnicity(e.target.value)}>
+              <select name="raceEthnicity" className={selectCls} value={raceEthnicity} onChange={e => setRaceEthnicity(e.target.value)}>
                 <option value="">Select…</option>
                 {['Black or African American','Hispanic or Latina','Asian','White','Native American or Alaska Native','Native Hawaiian or Pacific Islander','Multiracial','Prefer not to say','Other'].map(v => (
                   <option key={v} value={v}>{v}</option>
@@ -239,6 +241,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             <Field label="Country or cultural background" optional>
               <input
+                name="culturalBackground"
                 className={inputCls}
                 value={culturalBackground}
                 onChange={e => setCulturalBackground(e.target.value)}
@@ -247,7 +250,7 @@ export default function OnboardingScreen({ onComplete }) {
             </Field>
 
             <Field label="Preferred language">
-              <select className={selectCls} value={preferredLanguage} onChange={e => setPreferredLanguage(e.target.value)}>
+              <select name="preferredLanguage" className={selectCls} value={preferredLanguage} onChange={e => setPreferredLanguage(e.target.value)}>
                 {['English','Spanish','French','Haitian Creole','Swahili','Other'].map(v => (
                   <option key={v} value={v}>{v}</option>
                 ))}
@@ -255,7 +258,7 @@ export default function OnboardingScreen({ onComplete }) {
             </Field>
 
             <Field label="Previous pregnancies">
-              <select className={selectCls} value={previousPregnancies} onChange={e => setPreviousPregnancies(e.target.value)}>
+              <select name="previousPregnancies" className={selectCls} value={previousPregnancies} onChange={e => setPreviousPregnancies(e.target.value)}>
                 <option value="">Select…</option>
                 {['First pregnancy','1 previous','2 previous','3 or more'].map(v => (
                   <option key={v} value={v}>{v}</option>
@@ -303,6 +306,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             <Field label="Baby's name" optional>
               <input
+                name="babyName"
                 className={inputCls}
                 value={babyName}
                 onChange={e => setBabyName(e.target.value)}
@@ -312,6 +316,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             <Field label="Date of confirmed pregnancy">
               <input
+                name="confirmedPregnancyDate"
                 type="date"
                 className={inputCls}
                 value={confirmedPregnancyDate}
@@ -323,6 +328,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             <Field label="Due date" optional>
               <input
+                name="dueDate"
                 type="date"
                 className={inputCls}
                 value={dueDate}
@@ -463,6 +469,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             <Field label="Foods from your cultural background" optional>
               <textarea
+                name="culturalFoods"
                 className={`${inputCls} resize-none`}
                 rows={3}
                 value={culturalFoods}
@@ -473,6 +480,7 @@ export default function OnboardingScreen({ onComplete }) {
 
             <Field label="Healing or traditional foods you rely on" optional>
               <textarea
+                name="healingFoods"
                 className={`${inputCls} resize-none`}
                 rows={3}
                 value={healingFoods}
