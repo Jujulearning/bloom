@@ -16,6 +16,13 @@ export const saveProfile = (profile) => localStorage.setItem(KEYS.PROFILE, JSON.
 
 export const isOnboarded = () => !!localStorage.getItem(KEYS.ONBOARDED);
 export const setOnboarded = () => localStorage.setItem(KEYS.ONBOARDED, 'true');
+export const resetOnboarding = () => {
+  localStorage.removeItem(KEYS.ONBOARDED);
+  localStorage.removeItem(KEYS.PROFILE);
+  localStorage.removeItem(KEYS.NUTRITION);
+  localStorage.removeItem(KEYS.QUESTIONNAIRE);
+  localStorage.removeItem(KEYS.CELEBRATIONS);
+};
 
 export const getNutritionProfile = () => safeGet(KEYS.NUTRITION, {});
 export const saveNutritionProfile = (nutrition) => localStorage.setItem(KEYS.NUTRITION, JSON.stringify(nutrition));

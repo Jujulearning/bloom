@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppState, useAppDispatch } from "../hooks/useAppState";
-import { getProfile, getCelebrationsShown, markCelebrationShown } from "../lib/profile";
+import { getProfile, getCelebrationsShown, markCelebrationShown, resetOnboarding } from "../lib/profile";
 import { getDayOf1000, getGestationalWeeks, getStageLabel as getGestationalStageLabel } from "../lib/gestationalAge";
 import ReminderBanner from "./ReminderBanner";
 import MilestoneCelebration from "./MilestoneCelebration";
@@ -258,6 +258,11 @@ export default function Garden() {
   const initials = motherName
     .split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 
+  const resetToOnboarding = () => {
+    resetOnboarding();
+    window.location.reload();
+  };
+
   return (
     <div className="px-4 pt-4 pb-2">
 
@@ -290,6 +295,13 @@ export default function Garden() {
             style={{background: stageStyle.bg, color: stageStyle.text, borderColor: stageStyle.border}}>
             {stageStyle.emoji} {gestationalLabel || stageStyle.label}
           </div>
+          <button
+            onClick={resetToOnboarding}
+            className="text-[10px] text-gray-500 hover:text-[#7F77DD] transition-colors"
+            aria-label="Reset onboarding"
+          >
+            Reset onboarding
+          </button>
         </div>
       </div>
 
