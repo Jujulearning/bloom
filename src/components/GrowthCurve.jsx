@@ -108,7 +108,7 @@ export default function GrowthCurve() {
 
       {/* Entry list */}
       {log.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">Recent entries</h3>
           <div className="space-y-2.5">
             {[...log].sort((a,b)=>b.week-a.week).slice(0,6).map((entry,i)=>{
@@ -126,6 +126,72 @@ export default function GrowthCurve() {
           </div>
         </div>
       )}
+
+      {/* Understanding growth section */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">Understanding the chart</h3>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-3 rounded-full bg-[#E1F5EE] flex-shrink-0 mt-1"/>
+            <div>
+              <p className="text-xs font-semibold text-gray-700">Shaded band = WHO 5th–95th percentile</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">This is the healthy range for most babies. Being anywhere inside is great. Percentiles describe where your baby falls relative to others — not a grade.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-8 flex-shrink-0 mt-1 border-t-2 border-dashed border-gray-300"/>
+            <div>
+              <p className="text-xs font-semibold text-gray-700">Dashed line = 50th percentile</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Exactly half of babies are above this line, half below. Being above or below the 50th is completely normal.</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-2 h-2 rounded-full bg-[#1D9E75] flex-shrink-0 mt-1 ml-3"/>
+            <div>
+              <p className="text-xs font-semibold text-gray-700">Green dots = {baby.name}'s measurements</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">What matters most is that the curve follows a steady, consistent trend — not which percentile they're in.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* When to reach out */}
+      <div className="bg-[#EEEDFE] border border-[#C5C2F5] rounded-2xl p-4 mb-4">
+        <h3 className="text-sm font-semibold text-[#3C3489] mb-2">When to talk to your pediatrician</h3>
+        <ul className="space-y-1.5">
+          {[
+            "Weight below the 5th percentile on two consecutive visits",
+            "A sudden drop across two percentile lines (e.g., 75th → 25th)",
+            "Head circumference growing very slowly — can be worth checking",
+            "Length/height far below weight percentile, or vice versa",
+          ].map((item) => (
+            <li key={item} className="flex items-start gap-2">
+              <span className="text-[#7F77DD] text-xs mt-0.5">•</span>
+              <p className="text-[10px] text-[#534AB7] leading-relaxed">{item}</p>
+            </li>
+          ))}
+        </ul>
+        <p className="text-[10px] text-[#7F77DD] mt-2">A single low reading is rarely concerning — it's the trend over time that matters most.</p>
+      </div>
+
+      {/* Growth tips by stage */}
+      <div className="bg-[#E1F5EE] border border-[#A7DFC9] rounded-2xl p-4 mb-4">
+        <h3 className="text-sm font-semibold text-[#0F6E56] mb-2">Supporting healthy growth</h3>
+        <ul className="space-y-1.5">
+          {[
+            "Breast milk or formula provides everything needed for the first 6 months",
+            "Responsive feeding (on demand) supports both weight and development",
+            "Iron-rich foods matter when starting solids around 6 months",
+            "Tummy time builds neck and shoulder strength that supports motor milestones",
+            "Talk, sing, and read — language exposure directly supports brain growth",
+          ].map((item) => (
+            <li key={item} className="flex items-start gap-2">
+              <span className="text-[#1D9E75] text-xs mt-0.5">🌿</span>
+              <p className="text-[10px] text-[#0F6E56] leading-relaxed">{item}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {/* Modal */}
       {showModal && (
