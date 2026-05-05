@@ -297,7 +297,7 @@ export default function Garden() {
           </div>
           <button
             onClick={resetToOnboarding}
-            className="text-[10px] text-gray-500 hover:text-[#7F77DD] transition-colors"
+            className="text-[10px] font-semibold bg-white border border-gray-200 text-gray-700 px-3 py-1.5 rounded-full shadow-sm hover:bg-[#F7F2FF] hover:border-[#CDC3F7] transition-colors"
             aria-label="Reset onboarding"
           >
             Reset onboarding
