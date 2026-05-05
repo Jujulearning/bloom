@@ -1,0 +1,18 @@
+export const milestones = [
+  { id: 1,  name: "First smile",             targetWeek: 6,   category: "social"   },
+  { id: 2,  name: "Tracks moving objects",   targetWeek: 8,   category: "vision"   },
+  { id: 3,  name: "Holds head steady",       targetWeek: 12,  category: "motor"    },
+  { id: 4,  name: "Rolls over",              targetWeek: 16,  category: "motor"    },
+  { id: 5,  name: "Babbles & coos",          targetWeek: 16,  category: "language" },
+  { id: 6,  name: "Reaches for objects",     targetWeek: 20,  category: "motor"    },
+  { id: 7,  name: "Sits without support",    targetWeek: 28,  category: "motor"    },
+  { id: 8,  name: "Responds to own name",    targetWeek: 30,  category: "social"   },
+  { id: 9,  name: "First word",              targetWeek: 40,  category: "language" },
+  { id: 10, name: "Waves bye-bye",           targetWeek: 40,  category: "social"   },
+  { id: 11, name: "Stands alone",            targetWeek: 52,  category: "motor"    },
+  { id: 12, name: "First steps",             targetWeek: 56,  category: "motor"    },
+  { id: 13, name: "Points to objects",       targetWeek: 60,  category: "social"   },
+  { id: 14, name: "10+ word vocabulary",     targetWeek: 78,  category: "language" },
+  { id: 15, name: "2-word phrases",          targetWeek: 96,  category: "language" },
+  { id: 16, name: "Names 6+ body parts",     targetWeek: 104, category: "language" },
+];

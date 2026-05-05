@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: "DM Sans", system-ui, sans-serif;
+  background: #F8F9FA;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  background: #F8F9FA;
+  position: relative;
+}
+
+input[type="range"] { cursor: pointer; }
