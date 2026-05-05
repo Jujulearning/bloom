@@ -78,6 +78,9 @@ export default function MamaHealth() {
   const [epdsResult, setEpdsResult]   = useState(null);
   const [selected, setSelected]       = useState(null);
   const [loggedSymptoms, setLoggedSymptoms] = useState([]);
+  const [moodConfirm, setMoodConfirm] = useState(null);
+  const [sleepLogged, setSleepLogged] = useState(false);
+  const [bpLogged, setBpLogged]       = useState(null);
 
   const isPostBirth = currentDay >= baby.birthDay;
   const todayMood   = mama.moodLog.find((l) => l.day === currentDay);
@@ -115,6 +118,7 @@ export default function MamaHealth() {
     if (!bpSys || !bpDia) return;
     const s = parseInt(bpSys), d = parseInt(bpDia);
     dispatch({type:"LOG_BP",systolic:s,diastolic:d});
+    setBpLogged({systolic: s, diastolic: d});
     if (s>=140||d>=90) {
       dispatch({type:"ADD_FLORA_MESSAGE",message:{id:Date.now(),role:"flora",
         text:"I saw your BP reading — that's high. Please contact your provider today. This is important and worth mentioning to your midwife or OB.",
@@ -217,15 +221,38 @@ export default function MamaHealth() {
 
       {/* 1. How are you feeling? */}
       <Section icon={Heart} title="How are you feeling today?" subtitle="Tap to log your mood" color="#7F77DD">
-        <div className="flex justify-around mb-4">
+        <div className="flex justify-around mb-3">
           {MOODS.map((m)=>(
-            <button key={m.score} onClick={()=>dispatch({type:"LOG_MOOD",score:m.score})}
+            <button key={m.score}
+              onClick={() => {
+                dispatch({type:"LOG_MOOD",score:m.score});
+                setMoodConfirm(m);
+              }}
               className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${todayMood?.score===m.score?"bg-[#EEEDFE] scale-110 shadow-sm":""}`}>
               <span className="text-2xl">{m.emoji}</span>
               <span className="text-[10px] text-gray-400">{m.label}</span>
             </button>
           ))}
         </div>
+
+        {/* Instant confirmation after logging */}
+        {(moodConfirm || todayMood) && (() => {
+          const m = moodConfirm || MOODS.find(x => x.score === todayMood.score);
+          const messages = {
+            1: "Thank you for being honest. That takes courage. Flora is here if you want to talk. 💜",
+            2: "Logged. It's okay to have hard days — you're still showing up. 💜",
+            3: "Got it. Some days are just okay, and that's perfectly valid. 🌿",
+            4: "Great to hear you're doing well today. Keep it up! 🌿",
+            5: "Love to see it! Soak it in — you deserve this. 🌟",
+          };
+          return (
+            <div className="bg-[#EEEDFE] rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2">
+              <span className="text-lg">{m.emoji}</span>
+              <p className="text-xs text-[#534AB7] leading-snug">{messages[m.score]}</p>
+            </div>
+          );
+        })()}
+
         {moodData.some((d) => d.score) && (
           <ResponsiveContainer width="100%" height={55}>
             <LineChart data={moodData}>
@@ -246,17 +273,34 @@ export default function MamaHealth() {
             Low sleep for {lowSleepDays} days in a row is worth watching. Flora has been notified. 💜
           </div>
         )}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-3">
           <input type="range" min="0" max="12" step="0.5" value={sleep}
-            onChange={(e)=>setSleep(parseFloat(e.target.value))} className="flex-1 accent-[#534AB7]"/>
+            onChange={(e) => { setSleep(parseFloat(e.target.value)); setSleepLogged(false); }}
+            className="flex-1 accent-[#534AB7]"/>
           <span className="text-2xl font-bold text-[#534AB7] w-14 text-right">{sleep}h</span>
         </div>
+
+        {/* Instant feedback after logging */}
+        {sleepLogged && (() => {
+          const msg =
+            sleep >= 8 ? "That's solid rest. Your body thanks you. 🌙" :
+            sleep >= 6 ? "Every hour counts — you're doing your best. 🌿" :
+            sleep >= 4 ? "Short nights are hard. Rest whenever you can today. 💜" :
+            "That's a tough night. Be gentle with yourself today. 💜";
+          return (
+            <div className="bg-[#EEEDFE] rounded-xl px-3 py-2.5 mb-3 flex items-center gap-2">
+              <span className="text-lg">🌙</span>
+              <p className="text-xs text-[#534AB7]">✓ {sleep}h logged — {msg}</p>
+            </div>
+          );
+        })()}
+
         <div className="flex items-center justify-between">
           <div>
             {avgSleep && <p className="text-xs text-gray-500">7-day average: <span className="font-semibold">{avgSleep}h</span></p>}
-            <p className="text-[10px] text-gray-400 mt-0.5">Most adults need 7–9h. With a newborn, every hour counts.</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">Most adults need 7–9h. With a baby, every hour counts.</p>
           </div>
-          <button onClick={()=>dispatch({type:"LOG_SLEEP",hours:sleep})}
+          <button onClick={() => { dispatch({type:"LOG_SLEEP",hours:sleep}); setSleepLogged(true); }}
             className="bg-[#534AB7] text-white px-5 py-2.5 rounded-xl text-sm font-medium">
             Log
           </button>
@@ -270,35 +314,88 @@ export default function MamaHealth() {
         subtitle={latestBP ? `Last reading: ${latestBP.systolic}/${latestBP.diastolic} mmHg` : "Log a new reading below"}
         color={bpHigh ? "#EF4444" : bpBorder ? "#F59E0B" : "#1D9E75"}
         bg={bpHigh ? "#FEF2F2" : bpBorder ? "#FFFBEB" : "white"}>
+
+        {/* Latest reading display */}
         {latestBP && (
-          <div className={`text-3xl font-bold mb-3 ${bpHigh?"text-red-600":bpBorder?"text-amber-600":"text-[#1D9E75]"}`}>
-            {latestBP.systolic}/{latestBP.diastolic}
-            <span className="text-sm font-normal text-gray-400 ml-2">mmHg</span>
+          <div className="flex items-end gap-3 mb-3">
+            <div className="text-center">
+              <div className={`text-3xl font-bold leading-none ${bpHigh?"text-red-600":bpBorder?"text-amber-600":"text-[#1D9E75]"}`}>
+                {latestBP.systolic}
+              </div>
+              <div className="text-[10px] text-gray-400 mt-1 font-medium">Systolic</div>
+              <div className="text-[9px] text-gray-300">upper number</div>
+            </div>
+            <div className={`text-2xl font-light mb-3 ${bpHigh?"text-red-300":bpBorder?"text-amber-300":"text-gray-300"}`}>/</div>
+            <div className="text-center">
+              <div className={`text-3xl font-bold leading-none ${bpHigh?"text-red-600":bpBorder?"text-amber-600":"text-[#1D9E75]"}`}>
+                {latestBP.diastolic}
+              </div>
+              <div className="text-[10px] text-gray-400 mt-1 font-medium">Diastolic</div>
+              <div className="text-[9px] text-gray-300">lower number</div>
+            </div>
+            <div className="text-xs text-gray-400 mb-3 ml-1">mmHg</div>
           </div>
         )}
-        {bpHigh && (
+
+        {/* Instant clarity after logging or on existing reading */}
+        {bpLogged && (() => {
+          const { systolic: s, diastolic: d } = bpLogged;
+          const high = s >= 140 || d >= 90;
+          const border = !high && (s >= 120 || d >= 80);
+          return (
+            <div className={`rounded-xl p-3 mb-3 text-sm ${high ? "bg-red-100 border border-red-200 text-red-800" : border ? "bg-amber-100 border border-amber-200 text-amber-800" : "bg-[#E1F5EE] border border-[#A7DFC9] text-[#0F6E56]"}`}>
+              {high
+                ? "⚠️ That reading is high (≥140/90). Please contact your provider or midwife today — this needs attention now."
+                : border
+                ? "Worth watching. That's slightly elevated (≥120/80). Keep logging daily and mention it at your next visit."
+                : "✓ Great reading — that's in the healthy range. Keep up the consistent tracking! 💚"}
+            </div>
+          );
+        })()}
+
+        {bpHigh && !bpLogged && (
           <div className="bg-red-100 border border-red-200 rounded-xl p-3 mb-3 text-sm text-red-800">
-            ⚠️ This is in the high range (≥140/90). Please contact your provider today — don't wait.
+            ⚠️ Your last reading was high (≥140/90). Please contact your provider today.
           </div>
         )}
-        {bpBorder && (
-          <div className="bg-amber-100 border border-amber-200 rounded-xl p-3 mb-3 text-xs text-amber-800">
-            This reading (≥120/80) is borderline. Keep logging and mention it at your next appointment.
+        {bpBorder && !bpLogged && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3 text-xs text-amber-800">
+            Your last reading was slightly elevated (≥120/80). Keep an eye on this and mention it at your next visit.
           </div>
         )}
-        {!bpHigh && !bpBorder && latestBP && (
+        {!bpHigh && !bpBorder && latestBP && !bpLogged && (
           <div className="bg-[#E1F5EE] rounded-xl p-3 mb-3 text-xs text-[#0F6E56]">
-            Looking good! Normal range is &lt;120/80. Log consistently for the best picture.
+            ✓ Your last reading was in the healthy range (&lt;120/80). Keep logging regularly. 💚
           </div>
         )}
-        <div className="flex gap-2">
-          <input type="number" placeholder="Systolic (top)" value={bpSys} onChange={(e)=>setBpSys(e.target.value)}
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#7F77DD]"/>
-          <input type="number" placeholder="Diastolic (bottom)" value={bpDia} onChange={(e)=>setBpDia(e.target.value)}
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#7F77DD]"/>
-          <button onClick={logBP} className="bg-[#1D9E75] text-white px-4 rounded-xl text-sm font-medium">Log</button>
+
+        {/* Labeled inputs */}
+        <p className="text-[10px] text-gray-400 mb-2">
+          <strong>Systolic</strong> = heart pumping · <strong>Diastolic</strong> = heart at rest
+        </p>
+        <div className="flex gap-2 mb-2">
+          <div className="flex-1">
+            <label className="text-[10px] font-semibold text-gray-600 mb-1 block">
+              Systolic <span className="text-gray-400 font-normal">(upper)</span>
+            </label>
+            <input type="number" placeholder="e.g. 118" value={bpSys}
+              onChange={(e) => { setBpSys(e.target.value); setBpLogged(null); }}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#7F77DD]"/>
+          </div>
+          <div className="flex-1">
+            <label className="text-[10px] font-semibold text-gray-600 mb-1 block">
+              Diastolic <span className="text-gray-400 font-normal">(lower)</span>
+            </label>
+            <input type="number" placeholder="e.g. 76" value={bpDia}
+              onChange={(e) => { setBpDia(e.target.value); setBpLogged(null); }}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#7F77DD]"/>
+          </div>
+          <div className="flex items-end pb-0.5">
+            <button onClick={logBP}
+              className="bg-[#1D9E75] text-white px-4 py-2.5 rounded-xl text-sm font-medium">Log</button>
+          </div>
         </div>
-        <p className="text-[9px] text-gray-400 mt-2">Tip: sit quietly for 5 minutes before measuring for the most accurate reading.</p>
+        <p className="text-[9px] text-gray-400">Sit quietly for 5 minutes before measuring for the most accurate reading.</p>
       </Section>
 
       {/* 4. Symptoms */}
