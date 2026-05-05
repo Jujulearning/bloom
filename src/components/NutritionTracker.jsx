@@ -1,53 +1,93 @@
 import { useState, useRef } from "react";
-import { Camera, ChevronDown, ChevronUp } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, ReferenceLine, Tooltip } from "recharts";
+import { Camera, ChevronDown, ChevronUp, ShoppingBag } from "lucide-react";
 import { useAppState, useAppDispatch } from "../hooks/useAppState";
 import { CULTURAL_FOODS, NUTRIENT_META, DAILY_TARGETS_PREGNANCY, DAILY_TARGETS_POSTPARTUM } from "../data/nutritionData";
 import { useNavigate } from "react-router-dom";
 
-function Ring({ pct, label, unit, value, target, color }) {
-  const r = 28, circ = 2 * Math.PI * r;
-  const filled = Math.min(pct, 100) / 100 * circ;
-  const c = pct >= 80 ? "#1D9E75" : pct >= 50 ? "#F59E0B" : "#EF4444";
+// Per-nutrient food tips and shop recommendations
+const NUTRIENT_TIPS = {
+  iron:     { tip: "Try lentils, spinach, black beans, or dark leafy greens — add a squeeze of lemon to boost absorption.", foods: ["Lentil soup", "Spinach salad", "Blackeyed peas"], shop: true },
+  folate:   { tip: "Add dark leafy greens, beans, or fortified cereals. Methylfolate supplements absorb better.", foods: ["Callaloo", "Black beans", "Chana masala"], shop: true },
+  calcium:  { tip: "Dairy, collard greens, sardines, and fortified plant milks are your best friends here.", foods: ["Sardines", "Collard greens", "Saag paneer"], shop: false },
+  vitaminD: { tip: "Sunlight helps, but fatty fish and D3 supplements are the most reliable sources.", foods: ["Catfish", "Sardines", "Mackerel"], shop: true },
+  omega3:   { tip: "Fatty fish 2–3x a week is ideal. Algae-based omega-3 is a great plant-based option.", foods: ["Ceviche", "Ackee & saltfish", "Sardines"], shop: true },
+  calories: { tip: "You need extra fuel right now. Don't skip meals — your body is doing extraordinary work.", foods: [], shop: false },
+};
+
+const FEED_TYPES = ["Breast", "Formula", "Solid"];
+
+function IntakeBar({ label, unit, value, target, pct, nutrientKey }) {
+  const navigate = useNavigate();
+  const c     = pct >= 80 ? "#1D9E75" : pct >= 50 ? "#F59E0B" : "#EF4444";
+  const bg    = pct >= 80 ? "#E1F5EE" : pct >= 50 ? "#FEF9C3" : "#FEF2F2";
+  const hint  = NUTRIENT_TIPS[nutrientKey];
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <div className="flex flex-col items-center gap-1">
-      <svg width="68" height="68" viewBox="0 0 68 68">
-        <circle cx="34" cy="34" r={r} fill="none" stroke="#F3F4F6" strokeWidth="6"/>
-        <circle cx="34" cy="34" r={r} fill="none" stroke={c} strokeWidth="6"
-          strokeDasharray={`${filled} ${circ}`} strokeLinecap="round"
-          transform="rotate(-90 34 34)" style={{transition:"stroke-dasharray 0.5s"}}/>
-        <text x="34" y="31" textAnchor="middle" fontSize="11" fontWeight="700" fill={c} fontFamily="DM Sans, system-ui">
-          {Math.round(pct)}%
-        </text>
-        <text x="34" y="42" textAnchor="middle" fontSize="8.5" fill="#9CA3AF" fontFamily="DM Sans, system-ui">
-          {unit}
-        </text>
-      </svg>
-      <span className="text-[10px] text-gray-500 font-medium">{label}</span>
-      <span className="text-[9px] text-gray-400">{Math.round(value)}/{target}</span>
+    <div className="py-3 border-b border-gray-50 last:border-0">
+      <div className="flex items-center justify-between mb-1.5">
+        <span className="text-xs font-semibold text-gray-700">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold" style={{color: c}}>
+            {Math.round(value)}<span className="text-gray-400 font-normal">/{target} {unit}</span>
+          </span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{background: bg, color: c}}>
+            {Math.round(pct)}%
+          </span>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden mb-2">
+        <div className="h-full rounded-full transition-all duration-500"
+          style={{width: `${Math.min(pct, 100)}%`, background: c}}/>
+      </div>
+
+      {/* Tip + expand */}
+      {pct < 80 && (
+        <button onClick={() => setExpanded(!expanded)} className="w-full text-left">
+          <p className="text-[10px] text-gray-400 leading-relaxed">{hint.tip}</p>
+          {expanded && (
+            <div className="mt-2 space-y-1">
+              {hint.foods.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {hint.foods.map((f) => (
+                    <span key={f} className="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{f}</span>
+                  ))}
+                </div>
+              )}
+              {hint.shop && (
+                <button onClick={(e) => { e.stopPropagation(); navigate(`/vitamins/${nutrientKey}`); }}
+                  className="flex items-center gap-1 text-[10px] text-[#534AB7] font-semibold mt-1">
+                  <ShoppingBag size={10}/> See supplement options →
+                </button>
+              )}
+            </div>
+          )}
+        </button>
+      )}
+      {pct >= 80 && (
+        <p className="text-[10px] text-[#1D9E75] font-medium">You're on track! Keep it up 🌿</p>
+      )}
     </div>
   );
 }
-
-const FEED_TYPES = ["Breast", "Formula", "Solid"];
-const MEALS = ["Breakfast", "Lunch", "Dinner", "Snack"];
 
 export default function NutritionTracker() {
   const { mama, baby, currentDay } = useAppState();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const fileRef = useRef(null);
+  const fileRef  = useRef(null);
 
   const [showFoodModal, setShowFoodModal] = useState(false);
   const [activeCategory, setActiveCategory] = useState("West African");
-  const [activeMeal, setActiveMeal]         = useState("Breakfast");
   const [showChart, setShowChart]           = useState(false);
   const [photoResult, setPhotoResult]       = useState(null);
   const [photoLoading, setPhotoLoading]     = useState(false);
 
-  const isPostBirth  = currentDay >= baby.birthDay;
-  const targets      = isPostBirth ? DAILY_TARGETS_POSTPARTUM : DAILY_TARGETS_PREGNANCY;
-  const todayLog     = mama.nutritionLog.find((l) => l.day === currentDay) || {};
+  const isPostBirth = currentDay >= baby.birthDay;
+  const targets     = isPostBirth ? DAILY_TARGETS_POSTPARTUM : DAILY_TARGETS_PREGNANCY;
+  const todayLog    = mama.nutritionLog.find((l) => l.day === currentDay) || {};
 
   const nutrients = NUTRIENT_META.map((n) => {
     const value = todayLog[n.key] || 0;
@@ -55,7 +95,11 @@ export default function NutritionTracker() {
     return { ...n, value, target, pct: target ? (value / target) * 100 : 0 };
   });
 
-  const lowNutrients = nutrients.filter((n) => n.pct < 50 && n.key !== "calories");
+  const lowCount    = nutrients.filter((n) => n.pct < 50 && n.key !== "calories").length;
+  const overallPct  = Math.round(
+    nutrients.filter((n) => n.key !== "calories")
+      .reduce((s, n) => s + Math.min(n.pct, 100), 0) / 5
+  );
 
   const addFood = (food) => {
     dispatch({ type: "LOG_NUTRITION", iron: food.iron, folate: food.folate,
@@ -101,14 +145,6 @@ export default function NutritionTracker() {
     }
   };
 
-  // Weekly chart data
-  const chartData = Array.from({ length: 7 }, (_, i) => {
-    const day  = currentDay - 6 + i;
-    const log  = mama.nutritionLog.find((l) => l.day === day);
-    return { label: `D${day}`, calories: log?.calories || 0 };
-  });
-
-  // Last feed
   const todayFeeds = baby.feedLog.filter((f) => {
     const d = new Date(f.timestamp);
     return d.toDateString() === new Date().toDateString();
@@ -117,17 +153,47 @@ export default function NutritionTracker() {
 
   return (
     <div className="p-5">
+
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">Nutrition</h2>
-        <div className="flex gap-2">
-          <button onClick={() => fileRef.current?.click()}
-            disabled={photoLoading}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800">Nutrition</h2>
+          <p className="text-xs text-gray-400 mt-0.5">
+            {isPostBirth ? "Postpartum targets" : "Pregnancy targets"} · Day {currentDay}
+          </p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <button onClick={() => fileRef.current?.click()} disabled={photoLoading}
             className="flex items-center gap-1.5 bg-[#E1F5EE] text-[#0F6E56] text-xs px-3 py-1.5 rounded-xl font-medium">
-            <Camera size={14}/> {photoLoading ? "Scanning…" : "Photo"}
+            <Camera size={13}/> {photoLoading ? "Scanning…" : "Photo"}
           </button>
           <input ref={fileRef} type="file" accept="image/*" capture="environment"
             className="hidden" onChange={handlePhoto}/>
         </div>
+      </div>
+
+      {/* Overall score card */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold text-gray-700">Today's nutrition score</span>
+          <span className={`text-lg font-bold ${overallPct >= 80 ? "text-[#1D9E75]" : overallPct >= 50 ? "text-amber-500" : "text-red-400"}`}>
+            {overallPct}%
+          </span>
+        </div>
+        <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+          <div className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${overallPct}%`,
+              background: overallPct >= 80 ? "#1D9E75" : overallPct >= 50 ? "#F59E0B" : "#EF4444",
+            }}/>
+        </div>
+        <p className="text-[10px] text-gray-400 mt-2">
+          {overallPct >= 80
+            ? "Excellent! Your body and baby are getting what they need. 🌱"
+            : lowCount > 0
+            ? `${lowCount} nutrient${lowCount > 1 ? "s" : ""} need a boost — see tips below.`
+            : "Tap any bar to see what foods can help."}
+        </p>
       </div>
 
       {/* Photo result card */}
@@ -153,39 +219,12 @@ export default function NutritionTracker() {
         </div>
       )}
 
-      {/* Low nutrient banners */}
-      {lowNutrients.length > 0 && (
-        <div className="space-y-1.5 mb-4">
-          {lowNutrients.map((n) => (
-            <button key={n.key} onClick={() => navigate(`/vitamins/${n.key}`)}
-              className="w-full text-left bg-red-50 border border-red-100 rounded-xl px-4 py-2.5 flex items-center justify-between">
-              <span className="text-xs text-red-700 font-medium">{n.label} looks low — see recommendations</span>
-              <span className="text-xs text-red-400">→</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Nutrient rings */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
-        <div className="flex justify-between mb-3">
-          <span className="text-sm font-semibold text-gray-700">Today's nutrients</span>
-          <span className="text-xs text-gray-400">{activeMeal}</span>
-        </div>
-        {/* Meal selector */}
-        <div className="flex gap-1.5 mb-4 overflow-x-auto" style={{scrollbarWidth:"none"}}>
-          {MEALS.map((m) => (
-            <button key={m} onClick={() => setActiveMeal(m)}
-              className={`flex-shrink-0 text-xs px-3 py-1 rounded-full font-medium transition-colors ${
-                activeMeal === m ? "bg-[#1D9E75] text-white" : "bg-gray-100 text-gray-500"
-              }`}>
-              {m}
-            </button>
-          ))}
-        </div>
-        <div className="grid grid-cols-3 gap-2 justify-items-center">
-          {nutrients.map((n) => <Ring key={n.key} {...n}/>)}
-        </div>
+      {/* Nutrient intake bars */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-2 mb-4">
+        <p className="text-xs text-gray-400 pt-2 pb-1">Tap any bar under 100% for food ideas ↓</p>
+        {nutrients.map((n) => (
+          <IntakeBar key={n.key} {...n} nutrientKey={n.key}/>
+        ))}
       </div>
 
       {/* Add food button */}
@@ -194,24 +233,31 @@ export default function NutritionTracker() {
         + Add food from cultural library
       </button>
 
-      {/* Weekly chart */}
+      {/* Weekly calories toggle */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-4">
         <button onClick={() => setShowChart(!showChart)}
           className="w-full flex items-center justify-between px-4 py-3">
-          <span className="text-sm font-semibold text-gray-700">Weekly calories</span>
+          <span className="text-sm font-semibold text-gray-700">Weekly calorie history</span>
           {showChart ? <ChevronUp size={16} className="text-gray-400"/> : <ChevronDown size={16} className="text-gray-400"/>}
         </button>
         {showChart && (
-          <div className="px-2 pb-4">
-            <ResponsiveContainer width="100%" height={120}>
-              <BarChart data={chartData} margin={{top:5,right:5,bottom:0,left:0}}>
-                <XAxis dataKey="label" tick={{fontSize:9,fill:"#9CA3AF"}} axisLine={false} tickLine={false}/>
-                <YAxis hide/>
-                <Tooltip formatter={(v)=>[`${v} cal`]} contentStyle={{borderRadius:10,fontSize:11}}/>
-                <ReferenceLine y={targets.calories} stroke="#1D9E75" strokeDasharray="5 3" strokeOpacity={0.5}/>
-                <Bar dataKey="calories" fill="#1D9E75" radius={[4,4,0,0]}/>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="px-4 pb-4 space-y-2">
+            {Array.from({ length: 7 }, (_, i) => {
+              const day  = currentDay - 6 + i;
+              const log  = mama.nutritionLog.find((l) => l.day === day);
+              const cal  = log?.calories || 0;
+              const pct  = Math.min((cal / targets.calories) * 100, 100);
+              return (
+                <div key={day} className="flex items-center gap-3">
+                  <span className="text-[10px] text-gray-400 w-8 flex-shrink-0">D{day}</span>
+                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full bg-[#1D9E75]" style={{width: `${pct}%`}}/>
+                  </div>
+                  <span className="text-[10px] text-gray-500 w-12 text-right">{cal ? `${cal} cal` : "—"}</span>
+                </div>
+              );
+            })}
+            <p className="text-[10px] text-gray-400 pt-1">Target: {targets.calories} cal/day</p>
           </div>
         )}
       </div>
@@ -219,18 +265,17 @@ export default function NutritionTracker() {
       {/* Baby feeding (postpartum) */}
       {isPostBirth && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
-          <h3 className="font-semibold text-gray-700 text-sm mb-3">
-            {baby.name}'s feeds today · {todayFeeds.length} logged
+          <h3 className="font-semibold text-gray-700 text-sm mb-1">
+            {baby.name}'s feeds today
           </h3>
-          {lastFeed && (
-            <p className="text-xs text-gray-400 mb-3">
-              Last: {lastFeed.type} · {new Date(lastFeed.timestamp).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
-            </p>
-          )}
+          <p className="text-xs text-gray-400 mb-3">
+            {todayFeeds.length} logged
+            {lastFeed ? ` · Last: ${lastFeed.type} at ${new Date(lastFeed.timestamp).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}` : ""}
+          </p>
           <div className="flex gap-2">
             {FEED_TYPES.map((t) => (
               <button key={t} onClick={() => dispatch({type:"LOG_FEED",feedType:t})}
-                className="flex-1 py-2 rounded-xl text-sm font-medium bg-[#E1F5EE] text-[#0F6E56] hover:bg-[#C6EDD9] transition-colors">
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium bg-[#E1F5EE] text-[#0F6E56] hover:bg-[#C6EDD9] transition-colors">
                 {t}
               </button>
             ))}
@@ -244,10 +289,12 @@ export default function NutritionTracker() {
           <div className="mt-auto bg-white rounded-t-2xl w-full max-w-[430px] mx-auto max-h-[85vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 pt-4 pb-2">
-              <h3 className="font-semibold text-gray-800">Cultural Foods</h3>
+              <div>
+                <h3 className="font-semibold text-gray-800">Cultural Foods Library</h3>
+                <p className="text-[10px] text-gray-400 mt-0.5">Tap any food to log it · nutrition added instantly</p>
+              </div>
               <button onClick={() => setShowFoodModal(false)} className="text-gray-400 text-xl">✕</button>
             </div>
-            {/* Category tabs */}
             <div className="flex gap-2 px-4 pb-2 overflow-x-auto" style={{scrollbarWidth:"none"}}>
               {Object.keys(CULTURAL_FOODS).map((cat) => (
                 <button key={cat} onClick={() => setActiveCategory(cat)}
@@ -258,19 +305,19 @@ export default function NutritionTracker() {
                 </button>
               ))}
             </div>
-            {/* Food grid */}
             <div className="overflow-y-auto px-4 pb-5 flex-1">
               <div className="grid grid-cols-2 gap-2 pt-1">
                 {CULTURAL_FOODS[activeCategory].map((food) => (
                   <button key={food.name} onClick={() => { addFood(food); setShowFoodModal(false); }}
-                    className="bg-gray-50 border border-gray-100 rounded-2xl p-3 text-left hover:border-[#1D9E75] transition-colors">
+                    className="bg-gray-50 border border-gray-100 rounded-2xl p-3 text-left hover:border-[#1D9E75] transition-colors active:scale-95">
                     <div className="text-2xl mb-1">{food.emoji}</div>
                     <div className="text-xs font-semibold text-gray-800 leading-tight mb-1">{food.name}</div>
-                    <div className="text-[10px] text-gray-400">{food.serving}</div>
-                    <div className="text-[10px] text-[#1D9E75] mt-1">
-                      {food.iron > 0 && `🩸${food.iron}mg `}
-                      {food.calcium > 80 && `🦴`}
-                      {food.calories}cal
+                    <div className="text-[10px] text-gray-400 mb-1">{food.serving}</div>
+                    <div className="flex flex-wrap gap-1 text-[9px]">
+                      {food.iron > 2 && <span className="bg-red-50 text-red-500 px-1 rounded">🩸{food.iron}mg</span>}
+                      {food.folate > 60 && <span className="bg-green-50 text-green-600 px-1 rounded">🌿{food.folate}mcg</span>}
+                      {food.calcium > 100 && <span className="bg-blue-50 text-blue-500 px-1 rounded">🦴{food.calcium}mg</span>}
+                      <span className="bg-gray-100 text-gray-500 px-1 rounded">{food.calories}cal</span>
                     </div>
                   </button>
                 ))}

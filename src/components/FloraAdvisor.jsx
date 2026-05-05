@@ -147,6 +147,10 @@ RULES:
     ? [...floraMessages, { id: "streaming", role: "flora", text: streamText, streaming: true }]
     : floraMessages;
 
+  const floraIntro = mama.name
+    ? `Hi ${mama.name}! 🌿 I'm Flora — your wellness companion through every step of this journey. I'm here to listen, share what I know, and cheer you on, whether you're wondering about a symptom, navigating a tough day, or just need someone to talk to.\n\nOne small note: I'm AI-powered, so for anything medical, always loop in your provider — they know you best. But I'm here for everything in between. 💜\n\nHow are you feeling today, mama?`
+    : `Hi there! 🌿 I'm Flora — your wellness companion in Bloom. I'm here to listen, share what I know, and cheer you on through pregnancy and beyond.\n\nOne small note: I'm AI-powered, so for anything medical, please loop in your provider. But I'm here for everything in between. 💜\n\nHow are you doing today, mama?`;
+
   return (
     <div className="flex flex-col h-[calc(100dvh-64px)]">
       {/* Header */}
@@ -155,12 +159,15 @@ RULES:
           <div>
             <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
               Flora 🌿
+              <span className="text-[10px] bg-[#EEEDFE] text-[#534AB7] border border-[#C5C2F5] px-2 py-0.5 rounded-full font-medium">
+                AI companion
+              </span>
             </h2>
-            <p className="text-xs text-gray-400">Your health companion</p>
+            <p className="text-xs text-gray-400">Powered by Claude · Always check with your provider for medical questions</p>
           </div>
           {isDemo && (
             <span className="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-              Demo mode
+              Demo
             </span>
           )}
         </div>
@@ -169,10 +176,10 @@ RULES:
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         {allMessages.length === 0 && (
-          <div className="text-center pt-8">
-            <div className="text-4xl mb-3">🌿</div>
-            <p className="text-sm text-gray-500 font-medium">Hi {mama.name || "there"}!</p>
-            <p className="text-xs text-gray-400 mt-1">I'm watching your garden. What's on your mind?</p>
+          <div className="flex justify-start">
+            <div className="max-w-[88%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-white border border-gray-100 text-gray-800 shadow-sm rounded-bl-sm whitespace-pre-line">
+              {floraIntro}
+            </div>
           </div>
         )}
         {allMessages.map((msg) => (
