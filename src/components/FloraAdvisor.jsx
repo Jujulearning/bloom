@@ -41,8 +41,14 @@ const STATIC_RESPONSES = {
     "A persistent headache after delivery — especially if it's severe, or comes with vision changes, swelling, or upper abdominal pain — is something I take seriously. Those can be signs of postpartum preeclampsia, which can develop up to 6 weeks after birth. If any of those symptoms are present alongside your headache, please contact your provider or go to the ER today. If it's more of a tension headache, check your water intake and sleep first. How long has it been going on?",
   "i have anxiety and a killer headache":
     "I'm so sorry you're dealing with both anxiety and a severe headache — that sounds really tough. Anxiety is incredibly common during pregnancy and postpartum, and when it comes with a bad headache, it's important to rule out any medical causes. A severe headache could be related to preeclampsia, especially if accompanied by vision changes, swelling, or abdominal pain. Please reach out to your healthcare provider today to discuss both symptoms. In the meantime, try some gentle anxiety-reducing practices like deep breathing or a short walk. Have you been able to talk to anyone about how you're feeling?",
+  "im anxious":
+    "Anxiety during pregnancy and postpartum is so common — you're not alone in this. Many mothers experience it due to hormonal changes, sleep disruption, and the big life changes happening. If it's interfering with your daily life or feels overwhelming, talking to your provider about it is a great step. They can help determine if it's something that might benefit from additional support. What kinds of things tend to trigger your anxiety right now?",
   "i have anxiety":
     "Anxiety during pregnancy and postpartum is so common — you're not alone in this. Many mothers experience it due to hormonal changes, sleep disruption, and the big life changes happening. If it's interfering with your daily life or feels overwhelming, talking to your provider about it is a great step. They can help determine if it's something that might benefit from additional support. What kinds of things tend to trigger your anxiety right now?",
+  "im sick":
+    "I'm sorry you're not feeling well. During pregnancy and postpartum, feeling sick can come from many things — from hormones and tiredness to a simple cold or stomach upset. If your symptoms feel severe, sudden, or include fever, nausea, dizziness, or pain, please contact your provider. In the meantime, rest, stay hydrated, and reach out to someone you trust if you need support. What symptoms are you noticing right now?",
+  "i am sick":
+    "I'm sorry you're not feeling well. During pregnancy and postpartum, feeling sick can come from many things — from hormones and tiredness to a simple cold or stomach upset. If your symptoms feel severe, sudden, or include fever, nausea, dizziness, or pain, please contact your provider. In the meantime, rest, stay hydrated, and reach out to someone you trust if you need support. What symptoms are you noticing right now?",
   "killer headache":
     "A severe headache, especially during pregnancy or postpartum, needs to be taken seriously. It could be related to preeclampsia, dehydration, or other factors. Please contact your healthcare provider or go to urgent care if it's accompanied by vision changes, swelling, nausea, or confusion. In the meantime, rest in a dark room and stay hydrated. How long has this been going on and what does it feel like?",
 };
@@ -50,20 +56,28 @@ const STATIC_RESPONSES = {
 const findStaticResponse = (input) => {
   const normalizedInput = input.toLowerCase().trim();
   
-  // Exact match first
-  if (STATIC_RESPONSES[input]) return STATIC_RESPONSES[input];
+  // Exact match first using normalized keys
+  const exactKey = Object.keys(STATIC_RESPONSES).find(
+    (key) => key.toLowerCase() === normalizedInput
+  );
+  if (exactKey) return STATIC_RESPONSES[exactKey];
   
-  // Check for partial matches
+  // Check for partial or synonym matches
   for (const [key, response] of Object.entries(STATIC_RESPONSES)) {
     const normalizedKey = key.toLowerCase();
-    if (normalizedInput.includes(normalizedKey) || normalizedKey.includes(normalizedInput)) {
+    if (
+      normalizedInput.includes(normalizedKey) ||
+      normalizedKey.includes(normalizedInput)
+    ) {
       return response;
     }
   }
   
   // Keyword matching for symptoms
   const keywords = {
-    anxiety: STATIC_RESPONSES["i have anxiety"],
+    anxious: STATIC_RESPONSES["im anxious"] || STATIC_RESPONSES["i have anxiety"],
+    anxiety: STATIC_RESPONSES["im anxious"] || STATIC_RESPONSES["i have anxiety"],
+    sick: STATIC_RESPONSES["im sick"],
     headache: STATIC_RESPONSES["killer headache"],
     "bad headache": STATIC_RESPONSES["I have a bad headache that won't go away"],
     nausea: STATIC_RESPONSES["I have nausea — what can I eat?"],
@@ -71,7 +85,7 @@ const findStaticResponse = (input) => {
   };
   
   for (const [keyword, response] of Object.entries(keywords)) {
-    if (normalizedInput.includes(keyword)) {
+    if (response && normalizedInput.includes(keyword)) {
       return response;
     }
   }
