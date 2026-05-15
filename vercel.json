@@ -6,7 +6,7 @@
       "headers": [
         {
           "key": "WWW-Authenticate",
-          "value": "Basic realm=\"Bloom App\""
+          "value": "Basic realm=\"Amara App\""
         }
       ]
     }
