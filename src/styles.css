@@ -72,7 +72,7 @@ ul, ol { padding-left: 1.15em; }
 @keyframes rise { from { opacity: 0; transform: translateY(14px) scale(.96); } }
 
 .welcome { height: 100%; overflow-y: auto; background: var(--cream); }
-.welcome .photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(43, 51, 32, .55), transparent 35%, transparent 60%, var(--cream)); }
+.welcome .photo-over { background: linear-gradient(180deg, rgba(43, 51, 32, .55), transparent 35%, transparent 62%, var(--cream)); }
 .welcome-top { position: absolute; top: 54px; left: 24px; z-index: 2; }
 .welcome-body { padding: 0 24px 32px; margin-top: -40px; position: relative; z-index: 2; display: grid; gap: 14px; }
 
