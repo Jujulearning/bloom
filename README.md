@@ -14,10 +14,14 @@ Follow **Maya**, 24 weeks pregnant: she checks in feeling tired, discovers iron-
 | Explore | Cultural Food Library, "What can I eat?" search, food pages, recipes, Build My Plate, budget planner, grocery list |
 | Afya | Personalized nutrition companion with suggested prompts, actions, provider questions and safety escalation |
 | The Village | For You feed, rooms, live Working Mamas chat, threads, anonymous posting, events, safety tools |
-| Journey | Weekly focus, reflection, check-ins, For My Visit, visit summary, Support Near You |
+| Journey | Weekly focus, reflection, check-ins, For My Visit, visit summary |
+| My health | Blood pressure log and trend with safety guidance, weight gain vs. typical range, symptom patterns |
+| My 1,000 days | Longitudinal view from pregnancy to age two: BP, weight, energy and food variety by week, care visits |
+| Baby & postpartum | Growth chart, milestones, feeding log, postpartum care preview |
+| Life & resources | Private social-needs check-in (food, housing, rides, utilities, support, stress, safety, work) with a personal support plan and Support Near You |
 | Profile | Preferences, notifications, community settings, My Data controls |
 
-**Roadmap shown in the prototype:** MVP = Food Library + Afya. Early expansion = Village, recipes, planning tools, Journey. Long-term = provider tools, clinical integration, postpartum and infant feeding, resource integration.
+On a computer the app opens with a side navigation; on a phone it uses the bottom tabs.
 
 ## Notes
 
@@ -32,4 +36,4 @@ npm install
 npm run dev
 ```
 
-Main code lives in `src/`: `App.jsx` (shell and navigation), `Home.jsx`, `Explore.jsx`, `Afya.jsx`, `Village.jsx`, `Journey.jsx`, `Onboarding.jsx`, `data.js` (content) and `styles.css` (design system).
+Main code lives in `src/`: `App.jsx` (shell and navigation), `Home.jsx`, `Explore.jsx`, `Afya.jsx`, `Village.jsx`, `Journey.jsx`, `Health.jsx`, `Onboarding.jsx`, `data.js` (content) and `styles.css` (design system).
