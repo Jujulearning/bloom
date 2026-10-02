@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ArrowRight, Bell, ChevronRight, Utensils, Wallet, ClipboardList, MapPin, Droplet, Minus, Plus, Lock, Download, Trash2, RefreshCw, Sparkles, HeartPulse, HandHeart, CalendarRange } from "lucide-react";
 import { HealthSnapshot } from "./Health";
+import { RiskCards, HelpButton } from "./Safety";
+import { riskSignals } from "./helpers";
 import { useStore } from "./useStore";
 import { trimester } from "./helpers";
 import { TopBar, Photo, Chip, Nutrient, SectionHead, Avatar, Disclaimer, Toggle, AfyaMark, Sheet } from "./ui";
@@ -47,6 +49,7 @@ export function Home() {
           <h1 className="display-sm">{greet()}, {p.name}</h1>
         </div>
         <div className="head-actions">
+          <span className="mobile-only"><HelpButton /></span>
           <button className="icon-btn soft" aria-label="Notifications" onClick={() => notify("You're all caught up")}><Bell size={19} /></button>
           <button className="avatar-btn" onClick={() => nav.go("profile")} aria-label="Profile"><Avatar who="maya" size={38} /></button>
         </div>
@@ -63,6 +66,13 @@ export function Home() {
       </section>
 
       <HealthSnapshot />
+
+      {riskSignals(state).length > 0 && (
+        <>
+          <SectionHead title="For you this week" eyebrow="Based on your check-ins and tracking" />
+          <RiskCards signals={riskSignals(state)} />
+        </>
+      )}
 
       <section className="card checkin">
         <div className="checkin-head">
@@ -81,6 +91,7 @@ export function Home() {
 
       <section className="card today">
         <p className="eyebrow">Today for you</p>
+        <p className="why-you">{mood ? `Because you're feeling ${mood.toLowerCase()} today` : `Because you've checked in tired ${state.checkins.filter((c) => c.mood === "Tired").length} times this week`} · week {p.week}</p>
         <h3 className="serif-lg">{focus.title}</h3>
         <p className="muted">{focus.body}</p>
         <button className="btn btn-primary" onClick={() => nav.go(...focus.to)}>{focus.cta} <ArrowRight size={16} /></button>
@@ -222,6 +233,12 @@ export function Profile() {
           <Row label="Goals" value={p.goals.join(" · ")} onClick={() => notify("Goals update from your check-ins")} />
         </div>
 
+        <h4 className="group-title">Care team (optional)</h4>
+        <div className="list">
+          <Row label="Provider's office" value="Add number" onClick={() => notify("Saved on this device only (demo)")} />
+          <Row label="Labor & delivery" value="Add number" onClick={() => notify("Saved on this device only (demo)")} />
+        </div>
+
         <h4 className="group-title">Notifications</h4>
         <div className="list">
           <Toggle label="Daily check-in" on={state.notifications.checkins} onClick={() => dispatch({ type: "notifications", k: "checkins" })} />
@@ -287,6 +304,17 @@ export function MyData() {
             <li><b>Questions for your visit</b><span>Shared only when you choose to.</span></li>
             <li><b>Village posts</b><span>Visible to members of the room you post in. Anonymous posts are not linked to your name.</span></li>
           </ul>
+        </div>
+
+        <div className="card data-card">
+          <h4>What Amara never asks for</h4>
+          <ul className="data-list never">
+            <li><b>Your full name, birth date or address</b><span>A first name and an approximate area are enough.</span></li>
+            <li><b>Social Security, insurance or Medicaid numbers</b><span>Your care team collects these securely, not Amara.</span></li>
+            <li><b>Immigration status</b><span>Never asked, never needed for any feature.</span></li>
+            <li><b>Medical records or test results</b><span>You share only what you choose, in your own words.</span></li>
+          </ul>
+          <p className="muted small">Sensitive answers, like the Life & resources check-in, are optional, can be skipped, and are never shared unless you turn sharing on.</p>
         </div>
 
         <h4 className="group-title">You control</h4>

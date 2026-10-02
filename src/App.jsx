@@ -10,6 +10,7 @@ import { Afya, AfyaPlan } from "./Afya";
 import { Village, Rooms, Room, Thread, Compose, Events, Guidelines } from "./Village";
 import { Journey, Reflection, Visit, Summary, Support } from "./Journey";
 import { Health, Timeline, BabyScreen, Postpartum, Life } from "./Health";
+import { GetHelp, HelpButton } from "./Safety";
 
 const SCREENS = {
   home: Home, profile: Profile, mydata: MyData,
@@ -17,7 +18,7 @@ const SCREENS = {
   afya: Afya, "afya-plan": AfyaPlan,
   village: Village, rooms: Rooms, room: Room, thread: Thread, compose: Compose, events: Events, guidelines: Guidelines,
   journey: Journey, reflection: Reflection, visit: Visit, summary: Summary, support: Support,
-  health: Health, timeline: Timeline, baby: BabyScreen, postpartum: Postpartum, life: Life,
+  health: Health, timeline: Timeline, baby: BabyScreen, postpartum: Postpartum, life: Life, urgent: GetHelp,
 };
 
 const TABS = [
@@ -88,6 +89,7 @@ function Sidebar() {
           </div>
         ))}
       </nav>
+      <div className="sb-help"><HelpButton /><small>Urgent warning signs & who to call</small></div>
       <p className="sb-foot">Nourished by culture.<br />Rooted in science.</p>
     </aside>
   );

@@ -122,15 +122,14 @@ export default function Onboarding() {
       {step === "concerns" && (
         <Step title="Anything on your mind?" sub="Optional. Choose what you'd like support with.">
           <div className="chips">{CONCERNS.map((c) => <Chip small key={c} active={p.concerns.includes(c)} onClick={() => toggle("concerns", c)}>{c}</Chip>)}</div>
-          <p className="field-label">Symptoms lately</p>
-          <div className="chips">{["Fatigue", "Nausea", "Heartburn", "Swelling", "Trouble sleeping", "None right now"].map((c) => <Chip small key={c} active={p.symptoms.includes(c)} onClick={() => toggle("symptoms", c)}>{c}</Chip>)}</div>
-          <div className="note-card">Health details stay private to you. You decide if anything is ever shared with your care team.</div>
+          <div className="note-card">We only ask what helps us personalize your food guidance. No last name, birth date, address or insurance details, ever. You can skip anything and change it later.</div>
         </Step>
       )}
 
       {step === "ready" && (
         <div className="ready">
           <AfyaMark size={72} />
+          <div className="ready-scope">Afya offers food and nutrition guidance. It never diagnoses, prescribes or changes medications, and urgent warning signs always point you to real care.</div>
           <h1 className="display">Your Amara is ready, {p.name}.</h1>
           <p className="muted">We've gathered foods from {p.cuisines.slice(0, 2).join(" and ") || "your kitchen"}, guidance for week {p.week}, and a Village of mamas who get it.</p>
           <div className="ready-list">

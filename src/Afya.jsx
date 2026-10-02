@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Sparkles, ArrowRight, ClipboardList, Phone, Clock, ShoppingBasket, Utensils } from "lucide-react";
+import { Send, Sparkles, ArrowRight, ClipboardList, Clock, ShoppingBasket, Utensils, ShieldCheck } from "lucide-react";
 import { useStore } from "./useStore";
-import { AfyaMark, Nutrient, Photo, Disclaimer, TopBar, SaveBtn } from "./ui";
-import { AFYA_PROMPTS, RED_FLAGS, FOODS, QA, RECIPES } from "./data";
-import { makePlan, trimester } from "./helpers";
+import { AfyaMark, Nutrient, Photo, Disclaimer, TopBar, SaveBtn, Sheet } from "./ui";
+import { EscalationCard, ScopeNote, ScopeList, PrivacyNote, HelpButton } from "./Safety";
+import { AFYA_PROMPTS, FOODS, QA, RECIPES } from "./data";
+import { makePlan, trimester, assessMessage, piiCheck, bpStatus } from "./helpers";
 
 const ACTIONS = ["Find foods I already eat", "Build a meal", "Create a grocery list", "Help me prepare a question for my provider"];
 
@@ -12,16 +13,37 @@ function respond(raw, p) {
   const name = p.name;
   const homeFoods = p.cuisines.slice(0, 2).join(" and ");
 
-  if (RED_FLAGS.some((f) => t.includes(f))) {
-    const mental = ["suicid", "hurt myself", "harm myself"].some((f) => t.includes(f));
-    return mental
-      ? { urgent: true, text: `${name}, thank you for telling me. You deserve support right now. Please call or text 988 (Suicide & Crisis Lifeline), or the National Maternal Mental Health Hotline at 1-833-TLC-MAMA (1-833-852-6262), any time, day or night. If you're in immediate danger, call 911.` }
-      : { urgent: true, text: `I'm glad you told me. What you're describing should be checked by a professional right away, not managed with food. Please call your prenatal care provider or labor & delivery now. If it feels like an emergency, call 911.`, actions: ["Help me prepare a question for my provider"] };
+  const risk = assessMessage(raw);
+  if (risk && risk.kind !== "scope") {
+    const lead = {
+      crisis: `${name}, I'm really glad you told me.`,
+      emergency: `${name}, I want you to be safe. This isn't something to handle with food or wait out.`,
+      urgent: `${name}, thank you for telling me. I'm not able to tell you what's causing this, and it's important a professional checks.`,
+      unsafe: `${name}, thank you for trusting me with this.`,
+      mood: `${name}, that sounds really heavy.`,
+    }[risk.kind];
+    return { text: lead, escalate: risk.kind, bp: risk.bp, actions: risk.kind === "urgent" ? ["Help me prepare a question for my provider"] : undefined };
+  }
+  if (risk && risk.kind === "scope") {
+    return {
+      text: `That's a really good question, and it's one for your care team. I can't diagnose, prescribe, or tell you to start, stop or change a medication, dose or supplement, even a common one. What I can do is help you ask it clearly and keep it ready for your visit, or call your provider's office or pharmacist if you need an answer sooner.`,
+      scope: true,
+      questions: [raw.trim().replace(/\?*$/, "?")],
+    };
   }
 
   if (t.includes("another combination")) {
     const base = raw.split("with").pop().trim();
     return { text: `Here's another way to build around ${base}: try it with grilled fish for protein and omega-3s, sautéed okra and spinach for folate, and sliced tomatoes and peppers for vitamin C, which helps you absorb iron. It works well for week ${p.week}, when your iron and protein needs are climbing.`, nutrients: ["Protein", "Omega-3", "Folate", "Vitamin C"], actions: ["Build a meal", "Create a grocery list"] };
+  }
+
+  if (/blood pressure|\bbp\b/.test(t)) {
+    return {
+      text: `Food can support healthy blood pressure, ${name}, though it can't treat it, and only your provider can tell you what your readings mean. A few things that help many people: go lighter on stock cubes and salty seasonings and lean on onion, garlic, ginger and herbs for flavor; eat potassium-rich foods you love, like plantain, beans and leafy greens; and keep tracking so you and your provider can see the pattern.`,
+      foods: ["plantain", "black-eyed-peas", "callaloo"],
+      note: "If a reading is 140/90 or higher, or you have a bad headache, vision changes or sudden swelling, call your provider today.",
+      actions: ["Help me prepare a question for my provider"],
+    };
   }
 
   if (/tired|exhausted|fatigue|no energy|sleepy/.test(t)) {
@@ -116,6 +138,17 @@ export function Afya({ ask }) {
   const msgs = state.afya;
   const [text, setText] = useState("");
   const [typing, setTyping] = useState(false);
+  const [pii, setPii] = useState([]);
+  const [scopeOpen, setScopeOpen] = useState(false);
+  const tired = state.checkins.filter((c) => c.mood === "Tired").length;
+  const bp = state.bp;
+  const bpRising = bp.length > 2 && bp[bp.length - 1].s - bp[0].s >= 10 && bpStatus(bp[bp.length - 1].s, bp[bp.length - 1].d).level < 2;
+  const personalPrompts = [
+    tired >= 3 && "I've been exhausted lately. What should I eat?",
+    bpRising && "My blood pressure is creeping up. What should I eat?",
+    `Give me three quick ${p.cuisines.includes("Ghanaian") ? "Ghanaian" : p.cuisines[0]}-inspired dinners.`,
+  ].filter(Boolean);
+  const prompts = [...new Set([...personalPrompts, ...AFYA_PROMPTS])].slice(0, 7);
   const endRef = useRef();
   const asked = useRef(false);
 
@@ -124,6 +157,9 @@ export function Afya({ ask }) {
   const send = (q) => {
     const body = (q ?? text).trim();
     if (!body) return;
+    const found = piiCheck(body);
+    if (found.length) { setPii(found); return; }
+    setPii([]);
     setText("");
     add({ from: "me", text: body });
     setTyping(true);
@@ -165,8 +201,12 @@ export function Afya({ ask }) {
           <h1 className="display-sm">Afya</h1>
           <p>Nutrition guidance that starts with you.</p>
         </div>
-        {!!msgs.length && <button className="link" onClick={() => dispatch({ type: "set", patch: { afya: [] } })}>New chat</button>}
+        <div className="afya-head-actions">
+          <button className="icon-btn soft" onClick={() => setScopeOpen(true)} aria-label="What Afya can and can't do"><ShieldCheck size={18} /></button>
+          <HelpButton />
+        </div>
       </header>
+      {!!msgs.length && <button className="link new-chat" onClick={() => dispatch({ type: "set", patch: { afya: [] } })}>Start a new chat</button>}
       <div className="afya-context">
         <span>Week {p.week}</span><span>{p.cuisines.slice(0, 2).join(" · ")}</span><span>{p.cookTime}</span><span>{p.budget}</span>
       </div>
@@ -174,18 +214,28 @@ export function Afya({ ask }) {
       <div className="afya-thread">
         <div className="bubble afya-b">
           <p>Hi {p.name} 🌿 What are you thinking about today?</p>
+          {(tired >= 3 || bpRising) && (
+            <p className="afya-noticed">
+              {tired >= 3 && <>I noticed you've checked in tired {tired} times this week, so I'll lean on iron-rich foods you already love, like {p.loves.slice(0, 2).join(" and ").toLowerCase()}. </>}
+              {bpRising && <>Your blood pressure has crept up a little since week {bp[0].week}, so I'll keep an eye on salt too.</>}
+            </p>
+          )}
         </div>
         {!msgs.length && (
-          <div className="prompts">
-            {AFYA_PROMPTS.map((q) => <button key={q} onClick={() => send(q)}>{q}</button>)}
-          </div>
+          <>
+            <div className="prompts">
+              {prompts.map((q) => <button key={q} onClick={() => send(q)}>{q}</button>)}
+            </div>
+            <ScopeNote compact />
+          </>
         )}
         {msgs.map((m, k) => (m.from === "me" ? (
           <div key={k} className="bubble me-b"><p>{m.text}</p></div>
         ) : (
-          <div key={k} className={"bubble afya-b" + (m.urgent ? " urgent" : "")}>
-            {m.urgent && <p className="urgent-tag"><Phone size={14} /> Please reach out for care</p>}
+          <div key={k} className={"bubble afya-b" + (m.escalate ? " urgent" : "")}>
             <p>{m.text}</p>
+            {m.escalate && <EscalationCard kind={m.escalate} bp={m.bp} />}
+            {m.scope && <ScopeNote compact />}
             {m.list && <ol className="afya-list">{m.list.map(([a, b]) => <li key={a}><b>{a}</b><span>{b}</span></li>)}</ol>}
             {m.foods && (
               <div className="afya-foods">
@@ -221,11 +271,17 @@ export function Afya({ ask }) {
         {typing && <div className="bubble afya-b typing"><i /><i /><i /></div>}
         <div ref={endRef} />
       </div>
+      <Sheet open={scopeOpen} onClose={() => setScopeOpen(false)} title="What Afya can and can't do">
+        <ScopeList />
+        <p className="muted small">Afya is not monitored in real time. If something feels urgent, use Get help or call 911.</p>
+        <button className="btn btn-primary btn-block" onClick={() => setScopeOpen(false)}>Got it</button>
+      </Sheet>
 
       <div className="afya-foot">
-        <p className="afya-disc">Afya shares educational guidance, not diagnosis. For urgent symptoms, contact your provider.</p>
+        <PrivacyNote items={pii} />
+        <p className="afya-disc">Afya offers food guidance only: no diagnoses, prescriptions or medication changes. In an emergency, call 911.</p>
         <form className="composer" onSubmit={(e) => { e.preventDefault(); send(); }}>
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Ask Afya anything about food…" aria-label="Message Afya" />
+          <input value={text} onChange={(e) => { setText(e.target.value); if (pii.length) setPii([]); }} placeholder="Ask Afya anything about food…" aria-label="Message Afya" />
           <button className="send" disabled={!text.trim()} aria-label="Send"><Send size={18} /></button>
         </form>
       </div>

@@ -3,6 +3,8 @@ import { MoreHorizontal, MessageCircle, Send, ShieldCheck, Image as ImageIcon, E
 import { useStore } from "./useStore";
 import { TopBar, Avatar, RoleBadge, Sheet, Toggle, Photo, Chip, Empty } from "./ui";
 import { ROOMS, PEOPLE, LIVE_CHAT, CHAT_REPLIES, EVENTS } from "./data";
+import { assessMessage, piiCheck } from "./helpers";
+import { EscalationCard, PrivacyNote } from "./Safety";
 
 const MEDICAL = /bleed|pain|medic|dose|pill|castor|labor|contraction|blood pressure|diabet|cramp|spotting|vitamin|supplement|herb/i;
 const roomOf = (id) => ROOMS.find((r) => r.id === id) || ROOMS[0];
@@ -216,9 +218,11 @@ export function Room({ id = "working-mamas" }) {
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length, typing]);
 
+  const pii = piiCheck(text);
+  const risk = assessMessage(text);
   const send = (e) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || pii.length) return;
     dispatch({ type: "chat", msg: { by: "maya", mine: true, anon, text: text.trim() } });
     setText("");
     const r = CHAT_REPLIES[replyIdx.current++ % CHAT_REPLIES.length];
@@ -241,6 +245,12 @@ export function Room({ id = "working-mamas" }) {
             {typing && <div className="chat-typing">{typing} is typing<span className="dots"><i /><i /><i /></span></div>}
             <div ref={endRef} />
           </div>
+          {(pii.length > 0 || (risk && risk.kind !== "scope")) && (
+            <div className="chat-guard">
+              <PrivacyNote items={pii} />
+              {risk && risk.kind !== "scope" && <EscalationCard kind={risk.kind} bp={risk.bp} />}
+            </div>
+          )}
           <form className="chat-composer" onSubmit={send}>
             <button type="button" className={"anon-toggle" + (anon ? " on" : "")} onClick={() => setAnon(!anon)} aria-pressed={anon} title="Post anonymously"><EyeOff size={18} /></button>
             <input value={text} onChange={(e) => setText(e.target.value)} placeholder={anon ? "Message anonymously…" : "Message Working Mamas…"} aria-label="Message" />
@@ -324,8 +334,11 @@ export function Compose({ room: room0 = "second-tri", type: type0 = "Ask a quest
   const [photo, setPhoto] = useState(null);
   const [poll, setPoll] = useState(["Beans & lentils", "Eggs & dairy"]);
   const medical = MEDICAL.test(text);
+  const risk = assessMessage(text);
+  const pii = piiCheck(text);
 
   const submit = () => {
+    if (pii.length) return;
     const post = { id: "p" + Date.now(), room, by: anon ? "anon" : "maya", time: "now", text: text.trim(), reactions: { "💛": 0 }, replies: [], photo, poll: type === "Create a poll" ? poll.filter(Boolean) : null };
     dispatch({ type: "post", post });
     dispatch({ type: "addTo", key: "following", id: post.id });
@@ -338,7 +351,7 @@ export function Compose({ room: room0 = "second-tri", type: type0 = "Ask a quest
       <div className="compose-top">
         <button className="icon-btn" onClick={nav.back} aria-label="Close"><X size={20} /></button>
         <b>New post</b>
-        <button className="btn btn-sm btn-primary" disabled={!text.trim()} onClick={submit}>Post</button>
+        <button className="btn btn-sm btn-primary" disabled={!text.trim() || pii.length > 0} onClick={submit}>Post</button>
       </div>
       <div className="pad">
         <h1 className="display-sm">What's on your mind?</h1>
@@ -362,7 +375,13 @@ export function Compose({ room: room0 = "second-tri", type: type0 = "Ask a quest
         <p className="field-label">Post in</p>
         <div className="chips">{ROOMS.slice(0, 8).map((r) => <Chip small key={r.id} active={room === r.id} onClick={() => setRoom(r.id)}>{r.emoji} {r.name}</Chip>)}</div>
         <div className="list"><Toggle label="Post anonymously" desc="Great for sensitive questions. Moderators can still keep the space safe." on={anon} onClick={() => setAnon(!anon)} /></div>
-        {medical && <div className="health-notice soft"><Info size={15} /><p>Community experiences can be helpful, but they don't replace medical advice.</p></div>}
+        <PrivacyNote items={pii} />
+        {risk && risk.kind !== "scope" ? (
+          <>
+            <p className="field-label">Before you post</p>
+            <EscalationCard kind={risk.kind} bp={risk.bp} />
+          </>
+        ) : (medical || risk?.kind === "scope") && <div className="health-notice soft"><Info size={15} /><p>Community experiences can be helpful, but they don't replace medical advice. Questions about medications or doses are best asked of your provider or pharmacist.</p></div>}
         <button className="link guide-link" onClick={() => nav.go("guidelines")}><ShieldCheck size={14} /> Community guidelines</button>
       </div>
     </div>

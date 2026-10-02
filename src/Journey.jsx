@@ -209,7 +209,7 @@ export function Summary() {
           <Sec inc={inc} setInc={setInc} k="focus" label="Nutrition focus"><p>Iron, with protein and folate</p></Sec>
           <Sec inc={inc} setInc={setInc} k="foods" label="Foods frequently eaten"><div className="chips">{["Beans", "Chicken", "Plantain", "Spinach", "Jollof rice"].map((f) => <span key={f} className="alt">{f}</span>)}</div></Sec>
           <Sec inc={inc} setInc={setInc} k="checkins" label="Check-ins this week"><p>{state.checkins.map((c) => `${c.day}: ${c.mood}`).join(" · ")}</p></Sec>
-          {state.sdoh.done && state.sdoh.share && <Sec inc={inc} setInc={setInc} k="social" label="Life & resources (shared by Maya)"><p>{SDOH_QUESTIONS.filter((q) => q.need.includes(state.sdoh.answers[q.id])).map((q) => q.topic).join(" · ") || "No needs flagged"}</p></Sec>}
+          {state.sdoh.done && state.sdoh.share && <Sec inc={inc} setInc={setInc} k="social" label="Life & resources (shared by Maya)"><p>{SDOH_QUESTIONS.filter((q) => !["safety", "stress"].includes(q.id) && q.need.includes(state.sdoh.answers[q.id])).map((q) => q.topic).join(" · ") || "No needs flagged"}</p></Sec>}
           <Sec inc={inc} setInc={setInc} k="questions" label={`Questions for my provider (${qs.length})`}><ol>{qs.map((q) => <li key={q.id}>“{q.text}”</li>)}</ol></Sec>
           <p className="sum-foot">Self-reported by the patient through Amara for discussion. Not a clinical record.</p>
         </div>

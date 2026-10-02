@@ -4,6 +4,7 @@ import { useStore } from "./useStore";
 import { TopBar, SectionHead, Disclaimer, Chip, Toggle } from "./ui";
 import { BABY_GROWTH, MILESTONES, SDOH_QUESTIONS } from "./data";
 import { bpStatus, weightBand, trimester } from "./helpers";
+import { EscalationCard, HelpButton } from "./Safety";
 
 /* ---------- Small SVG line chart ---------- */
 function LineChart({ series, xKey = "week", h = 170, yMin, yMax, bands = [], refs = [], xLabel = "Week", unit = "" }) {
@@ -64,7 +65,7 @@ export function Health({ tab: tab0 = "Blood pressure" }) {
     dispatch({ type: "bp", reading: { week: p.week, s, d, when: "Today" } });
     setSys(""); setDia("");
     const status = bpStatus(s, d);
-    setWarn(status.level >= 2 ? status : null);
+    setWarn(status.level >= 2 ? { ...status, bp: `${s}/${d}` } : null);
     notify("Reading saved");
   };
   const logW = (e) => {
@@ -78,7 +79,7 @@ export function Health({ tab: tab0 = "Blood pressure" }) {
 
   return (
     <div>
-      <TopBar title="My health" />
+      <TopBar title="My health" right={<HelpButton />} />
       <div className="pad">
         <h1 className="display-sm">Your health, week by week.</h1>
         <p className="muted">Simple tracking you can bring to every visit. You decide what's shared.</p>
@@ -98,15 +99,7 @@ export function Health({ tab: tab0 = "Blood pressure" }) {
                 </div>
               </div>
             )}
-            {warn && (
-              <div className="alert">
-                <AlertTriangle size={18} />
-                <div>
-                  <b>{warn.level === 3 ? "Please get care now." : "Please call your provider today."}</b>
-                  <p>{warn.level === 3 ? "A reading this high in pregnancy needs urgent attention. Call your provider or go to labor & delivery now. If you have severe symptoms, call 911." : "A reading of 140/90 or higher in pregnancy should be checked the same day."}</p>
-                </div>
-              </div>
-            )}
+            {warn && <EscalationCard kind={warn.level === 3 ? "emergency" : "urgent"} bp={warn.bp} />}
             <form className="card log-form" onSubmit={logBP}>
               <p className="eyebrow">Log a reading</p>
               <div className="bp-inputs">
@@ -190,7 +183,7 @@ function SymptomLog() {
       <div className="card">
         <p className="eyebrow">How's your body today?</p>
         <div className="chips">{opts.map((o) => <Chip small key={o} active={pick.includes(o)} onClick={() => toggle(o)}>{o}</Chip>)}</div>
-        {pick.some((p) => ["Headache", "Swelling", "Dizziness"].includes(p)) && <div className="alert soft"><AlertTriangle size={16} /><p>Headaches, swelling or dizziness can sometimes be linked to blood pressure. Check your blood pressure, and call your provider if it's 140/90 or higher or the symptom is severe.</p></div>}
+        {pick.includes("Headache") && pick.includes("Swelling") ? <EscalationCard kind="urgent" /> : pick.some((p) => ["Headache", "Swelling", "Dizziness"].includes(p)) && <div className="alert soft"><AlertTriangle size={16} /><p>Headaches, swelling or dizziness can sometimes be linked to blood pressure. Check your blood pressure, and call your provider if it's 140/90 or higher or the symptom is severe.</p></div>}
         {pick.includes("Feeling low") && <div className="alert soft"><HeartHandshake size={16} /><p>You're not alone. The National Maternal Mental Health Hotline is free and confidential 24/7: call or text 1-833-TLC-MAMA.</p></div>}
         <button className="btn btn-primary btn-block" disabled={!pick.length} onClick={() => { dispatch({ type: "symptom", entry: { week: state.profile.week, day: "Today", list: pick } }); setPick([]); notify("Symptoms saved"); }}>Save today</button>
       </div>
@@ -404,7 +397,7 @@ export function Life() {
         <div className="pad">
           <h1 className="display-sm">Life outside the kitchen matters too.</h1>
           <p className="muted">Money, housing, rides to appointments and support at home all shape how you eat and feel. A few optional questions help Amara point you to real help.</p>
-          <div className="card soft"><Lock size={14} /> Your answers are private. Nothing is shared unless you choose to, and you can skip any question.</div>
+          <div className="card soft"><Lock size={14} /> Every question is optional. Answers stay on this device in this demo, are never sold, and are only shared if you turn sharing on. Answers about safety and mood are never included in anything you share.</div>
           <button className="btn btn-primary btn-block" onClick={() => setStep("q")}>Start (about 2 minutes) <ArrowRight size={16} /></button>
           <button className="btn btn-ghost btn-block" style={{ marginTop: 10 }} onClick={() => nav.go("support")}>Just browse resources</button>
         </div>
@@ -456,6 +449,7 @@ export function Life() {
         </div>
         <div className="actions">
           <button className="btn btn-soft" onClick={() => setStep("q")}>Update answers</button>
+          <button className="btn btn-ghost" onClick={() => { dispatch({ type: "sdoh", patch: { done: false, share: false, chw: false, answers: {} } }); setStep("intro"); notify("Your answers were cleared"); }}>Clear my answers</button>
           <button className="btn btn-ghost" onClick={() => nav.go("support")}>All resources</button>
         </div>
         <Disclaimer text="If you're in danger, call 911. For confidential support with relationship safety, call the National Domestic Violence Hotline at 1-800-799-7233 or text START to 88788." />

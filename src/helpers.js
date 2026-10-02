@@ -49,3 +49,58 @@ export function weightBand(week) {
   if (week <= 13) return { lo: Math.round((1.1 * week) / 13 * 10) / 10, hi: Math.round((4.4 * week) / 13 * 10) / 10 };
   return { lo: Math.round((1.1 + 0.8 * (week - 13)) * 10) / 10, hi: Math.round((4.4 + 1.0 * (week - 13)) * 10) / 10 };
 }
+
+/* ---------- Safety: red flags, scope and privacy ---------- */
+const has = (t, list) => list.some((w) => t.includes(w));
+
+const EMERGENCY = ["chest pain", "can't breathe", "cant breathe", "trouble breathing", "hard to breathe", "seizure", "passed out", "fainted", "unconscious", "soaking a pad", "soaking pads", "heavy bleeding", "bleeding a lot", "kill myself", "suicid", "end my life", "want to die", "hurt myself", "harm myself", "hurt my baby", "harm my baby"];
+const SELF_HARM = ["kill myself", "suicid", "end my life", "want to die", "hurt myself", "harm myself", "hurt my baby", "harm my baby"];
+const URGENT = ["bleeding", "spotting", "severe headache", "headache won't", "headache that won't", "worst headache", "vision", "blurry", "seeing spots", "flashing lights", "swollen face", "face is swollen", "swelling in my face", "hands are swollen", "sudden swelling", "upper belly", "right side pain", "baby isn't moving", "baby is not moving", "baby not moving", "baby moving less", "less movement", "not moving as much", "stopped moving", "leaking fluid", "water broke", "fever", "contractions", "can't keep anything down", "cant keep anything down", "can't keep fluids", "vomiting all day"];
+const MOOD = ["depressed", "hopeless", "can't stop crying", "cant stop crying", "panic attack", "anxious all the time", "so overwhelmed", "don't feel like myself", "numb"];
+const UNSAFE = ["hits me", "hit me", "hurts me", "afraid of my partner", "scared of my partner", "not safe at home", "threatens me", "abuse"];
+const SCOPE = /(diagnos|do i have|what do i have|is it (diabetes|preeclampsia|anemia)|prescri|dosage|\bdose\b|how many mg|\d+\s?mg\b|stop taking|quit taking|skip my (med|pill)|switch (my )?(med|pill)|change my (med|dose|pill)|my medication|my meds|antibiotic|insulin|metformin|labetalol|nifedipine|baby aspirin|ibuprofen|advil|tylenol|acetaminophen|antidepressant|zoloft|sertraline|can i take|should i take)/;
+
+export function assessMessage(raw) {
+  const t = raw.toLowerCase();
+  const bp = t.match(/(\d{2,3})\s*\/\s*(\d{2,3})/);
+  if (has(t, SELF_HARM)) return { kind: "crisis" };
+  if (has(t, EMERGENCY)) return { kind: "emergency" };
+  if (bp) {
+    const st = bpStatus(Number(bp[1]), Number(bp[2]));
+    if (st.level === 3) return { kind: "emergency", bp: `${bp[1]}/${bp[2]}` };
+    if (st.level === 2) return { kind: "urgent", bp: `${bp[1]}/${bp[2]}` };
+  }
+  if (has(t, UNSAFE)) return { kind: "unsafe" };
+  if (has(t, URGENT)) return { kind: "urgent" };
+  if (has(t, MOOD)) return { kind: "mood" };
+  if (SCOPE.test(t)) return { kind: "scope" };
+  return null;
+}
+
+export function piiCheck(raw) {
+  const found = [];
+  if (/[\w.+-]+@[\w-]+\.[\w.]+/.test(raw)) found.push("an email address");
+  if (/\b\d{3}-\d{2}-\d{4}\b/.test(raw)) found.push("a Social Security number");
+  else if (/(\+?1[\s.-]?)?\(?\b\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/.test(raw)) found.push("a phone number");
+  if (/\b\d{1,5}\s+\w+(\s\w+)?\s(street|st|avenue|ave|road|rd|boulevard|blvd|lane|ln|drive|dr|court|ct|way)\b/i.test(raw)) found.push("a street address");
+  if (/(member|insurance|policy|medicaid)\s*(id|number|#)/i.test(raw)) found.push("an insurance ID");
+  if (/\b(dob|date of birth|born on)\b/i.test(raw)) found.push("a birth date");
+  return found;
+}
+
+export function riskSignals(state) {
+  const out = [];
+  const bp = state.bp;
+  const last = bp[bp.length - 1];
+  const st = bpStatus(last.s, last.d);
+  if (st.level === 3) out.push({ level: "high", id: "bp3", title: `Your last blood pressure (${last.s}/${last.d}) is in the severe range.`, body: "Please get care now: call your provider or go to labor & delivery. If you have a severe headache, vision changes or trouble breathing, call 911.", actions: [["Get help now", "urgent"]] });
+  else if (st.level === 2) out.push({ level: "high", id: "bp2", title: `Your last blood pressure (${last.s}/${last.d}) is high.`, body: "A reading of 140/90 or higher in pregnancy should be checked by your provider today.", actions: [["Get help now", "urgent"], ["Open my BP", "health"]] });
+  else if (bp.length > 2 && last.s - bp[0].s >= 10) out.push({ level: "watch", id: "bptrend", title: `Your blood pressure has crept up since week ${bp[0].week}.`, body: `From ${bp[0].s}/${bp[0].d} to ${last.s}/${last.d}. Still under 140/90, and worth a conversation at your next visit. Checking a couple of times this week will help.`, actions: [["See my trend", "health"], ["Add to For My Visit", "addq:bp"]] });
+  const recent = state.symptoms.filter((s) => s.week >= state.profile.week - 1).flatMap((s) => s.list);
+  if (st.level >= 1 && (recent.includes("Headache") || recent.includes("Swelling"))) out.push({ level: "high", id: "bpsym", title: "Headache or swelling, with blood pressure on the rise.", body: "Together these can be early signs of preeclampsia. Please call your provider today to check in.", actions: [["Get help now", "urgent"]] });
+  if (state.symptoms.flatMap((s) => s.list).filter((x) => x === "Feeling low").length >= 2 || ["More than half the days", "Nearly every day"].includes(state.sdoh.answers.stress)) out.push({ level: "watch", id: "mood", title: "You've been carrying a lot lately.", body: "Feeling low or anxious in pregnancy is common and treatable. You deserve support: talk with your provider, or call or text 1-833-TLC-MAMA any time.", actions: [["Mental wellness support", "support:mental"]] });
+  const tired = state.checkins.filter((c) => c.mood === "Tired").length;
+  if (tired >= 3) out.push({ level: "info", id: "tired", title: `You've checked in tired ${tired} times this week.`, body: "Pregnancy fatigue is common, and it's also worth asking whether your iron should be checked.", actions: [["Add the iron question", "addq:iron"], ["Iron-rich foods I know", "library:Iron"]] });
+  if (state.sdoh.done && ["Often", "Sometimes"].includes(state.sdoh.answers.food)) out.push({ level: "info", id: "food", title: "Groceries have been tight.", body: "WIC and SNAP can help, and your budget planner builds around foods you already love.", actions: [["See food support", "support:food"], ["Budget planner", "budget"]] });
+  return out;
+}
