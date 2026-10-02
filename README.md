@@ -1,16 +1,35 @@
-# React + Vite
+# Amara Health · Interactive prototype
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Every kitchen tells a story. Nourished by culture. Rooted in science.**
 
-Currently, two official plugins are available:
+A high-fidelity, clickable mobile prototype of Amara Health, a culturally responsive maternal nutrition companion for the first 1,000 days. Live demo: https://bloom-three-pi.vercel.app
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Follow **Maya**, 24 weeks pregnant: she checks in feeling tired, discovers iron-rich foods she already loves, asks **Afya** to build a quick dinner, joins **Working Mamas** in **The Village**, saves a question for her next visit, and sees it all reflected in **My Journey**.
 
-## React Compiler
+## What's inside
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Area | Highlights |
+| --- | --- |
+| Home ("Today") | Week indicator, Afya check-in that tunes suggestions, nutrition focus, saved meal, Village preview |
+| Explore | Cultural Food Library, "What can I eat?" search, food pages, recipes, Build My Plate, budget planner, grocery list |
+| Afya | Personalized nutrition companion with suggested prompts, actions, provider questions and safety escalation |
+| The Village | For You feed, rooms, live Working Mamas chat, threads, anonymous posting, events, safety tools |
+| Journey | Weekly focus, reflection, check-ins, For My Visit, visit summary, Support Near You |
+| Profile | Preferences, notifications, community settings, My Data controls |
 
-## Expanding the ESLint configuration
+**Roadmap shown in the prototype:** MVP = Food Library + Afya. Early expansion = Village, recipes, planning tools, Journey. Long-term = provider tools, clinical integration, postpartum and infant feeding, resource integration.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Notes
+
+- Afya uses built-in sample responses. No AI API key is used or exposed in the browser.
+- Content is educational sample content, not medical advice. Images are illustrative concept images from the Amara Health website.
+- Demo state is saved in the browser. Use Profile → Reset demo to start over.
+
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Main code lives in `src/`: `App.jsx` (shell and navigation), `Home.jsx`, `Explore.jsx`, `Afya.jsx`, `Village.jsx`, `Journey.jsx`, `Onboarding.jsx`, `data.js` (content) and `styles.css` (design system).
