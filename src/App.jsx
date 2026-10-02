@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { House, Compass, Users, Route, Check } from "lucide-react";
+import { House, Compass, Users, Route, Check, HeartPulse, CalendarRange, Baby, ClipboardList, HandHeart, MapPin, User } from "lucide-react";
 import { StoreProvider } from "./store";
 import { useStore } from "./useStore";
-import { AfyaMark, AmaraLogo } from "./ui";
+import { AfyaMark, AmaraLogo, Avatar } from "./ui";
 import Onboarding from "./Onboarding";
 import { Home, Profile, MyData } from "./Home";
 import { Explore, Library, Search, FoodPage, Recipes, RecipePage, BuildPlate, Budget, Grocery } from "./Explore";
 import { Afya, AfyaPlan } from "./Afya";
 import { Village, Rooms, Room, Thread, Compose, Events, Guidelines } from "./Village";
 import { Journey, Reflection, Visit, Summary, Support } from "./Journey";
+import { Health, Timeline, BabyScreen, Postpartum, Life } from "./Health";
 
 const SCREENS = {
   home: Home, profile: Profile, mydata: MyData,
@@ -16,6 +17,7 @@ const SCREENS = {
   afya: Afya, "afya-plan": AfyaPlan,
   village: Village, rooms: Rooms, room: Room, thread: Thread, compose: Compose, events: Events, guidelines: Guidelines,
   journey: Journey, reflection: Reflection, visit: Visit, summary: Summary, support: Support,
+  health: Health, timeline: Timeline, baby: BabyScreen, postpartum: Postpartum, life: Life,
 };
 
 const TABS = [
@@ -24,6 +26,27 @@ const TABS = [
   { id: "afya", label: "Afya" },
   { id: "village", label: "Village", Icon: Users },
   { id: "journey", label: "Journey", Icon: Route },
+];
+
+const SIDE = [
+  { group: null, items: [
+    { id: "home", label: "Today", Icon: House },
+    { id: "explore", label: "Food Library", Icon: Compass },
+    { id: "afya", label: "Afya", afya: true },
+    { id: "village", label: "The Village", Icon: Users },
+    { id: "journey", label: "My Journey", Icon: Route },
+  ] },
+  { group: "My health", items: [
+    { id: "health", label: "Blood pressure & tracking", Icon: HeartPulse },
+    { id: "timeline", label: "My 1,000 days", Icon: CalendarRange },
+    { id: "baby", label: "Baby & growth", Icon: Baby },
+    { id: "visit", label: "For My Visit", Icon: ClipboardList },
+  ] },
+  { group: "Life & support", items: [
+    { id: "life", label: "Life & resources", Icon: HandHeart },
+    { id: "support", label: "Support near you", Icon: MapPin },
+    { id: "profile", label: "Profile & privacy", Icon: User },
+  ] },
 ];
 
 function BottomNav() {
@@ -41,6 +64,35 @@ function BottomNav() {
   );
 }
 
+function Sidebar() {
+  const { state, stack, nav } = useStore();
+  const root = stack[0].name;
+  const p = state.profile;
+  return (
+    <aside className="sidebar" aria-label="Main navigation">
+      <div className="sb-brand"><AmaraLogo size={1.05} /></div>
+      <button className="sb-me" onClick={() => nav.tab("profile")}>
+        <Avatar who="maya" size={38} />
+        <span><b>{p.name}</b><small>{p.stage === "Postpartum" ? "Postpartum" : `Week ${p.week} · pregnant`}</small></span>
+      </button>
+      <nav>
+        {SIDE.map((g) => (
+          <div key={g.group || "main"} className="sb-group">
+            {g.group && <p className="sb-label">{g.group}</p>}
+            {g.items.map(({ id, label, Icon, afya }) => (
+              <button key={id} className={"sb-item" + (root === id ? " on" : "")} onClick={() => nav.tab(id)} aria-current={root === id ? "page" : undefined}>
+                {afya ? <AfyaMark size={24} /> : <Icon size={19} strokeWidth={1.8} />}
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </nav>
+      <p className="sb-foot">Nourished by culture.<br />Rooted in science.</p>
+    </aside>
+  );
+}
+
 function Screen() {
   const { stack } = useStore();
   const top = stack[stack.length - 1];
@@ -50,7 +102,7 @@ function Screen() {
   const hideNav = ["room", "compose"].includes(top.name);
   return (
     <>
-      <main className={"screen" + (hideNav ? " no-nav" : "")} ref={ref} key={stack.length + top.name}>
+      <main className={"screen" + (hideNav ? " no-nav" : "") + " s-" + top.name} ref={ref} key={stack.length + top.name}>
         <Comp {...(top.params || {})} />
       </main>
       {!hideNav && <BottomNav />}
@@ -63,49 +115,37 @@ function Toast() {
   return toast ? <div className="toast" role="status"><Check size={16} /> {toast}</div> : null;
 }
 
-function Phone() {
+function Shell() {
   const { state } = useStore();
   const [splash, setSplash] = useState(true);
-  useEffect(() => { const t = setTimeout(() => setSplash(false), 1700); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setTimeout(() => setSplash(false), 1600); return () => clearTimeout(t); }, []);
+  if (splash) {
+    return (
+      <div className="splash" onClick={() => setSplash(false)}>
+        <div className="splash-mark"><AfyaMark size={64} /></div>
+        <AmaraLogo light size={1.6} />
+        <p>Nourished by culture. Rooted in science.</p>
+      </div>
+    );
+  }
+  if (!state.onboarded) {
+    return <div className="onb-shell"><div className="onb-frame"><Onboarding /><Toast /></div></div>;
+  }
   return (
-    <div className="phone">
-      <div className="phone-inner">
-        {splash ? (
-          <div className="splash" onClick={() => setSplash(false)}>
-            <div className="splash-mark"><AfyaMark size={64} /></div>
-            <AmaraLogo light size={1.6} />
-            <p>Nourished by culture. Rooted in science.</p>
-          </div>
-        ) : !state.onboarded ? <Onboarding /> : <Screen />}
+    <div className="app">
+      <Sidebar />
+      <div className="app-main">
+        <Screen />
         <Toast />
       </div>
     </div>
   );
 }
 
-function SidePanel() {
-  return (
-    <aside className="side">
-      <AmaraLogo size={1.3} />
-      <h1>Every kitchen tells a story.</h1>
-      <p className="side-lede">An interactive prototype of Amara Health, a culturally responsive maternal nutrition companion for the first 1,000 days. Follow Maya, 24 weeks pregnant, through her day.</p>
-      <div className="side-roadmap">
-        <div><span className="dot mvp" /><b>MVP</b><p>Culturally responsive Food Library + personalized Afya guidance</p></div>
-        <div><span className="dot early" /><b>Early expansion</b><p>The Village, recipes, Build My Plate, saved foods, grocery planning, Journey check-ins</p></div>
-        <div><span className="dot later" /><b>Long-term platform</b><p>Provider tools, clinical integration, postpartum & infant feeding, resource integration, health-system partnerships</p></div>
-      </div>
-      <p className="side-note">Concept prototype with sample content and illustrative images. Educational only, not medical advice.</p>
-    </aside>
-  );
-}
-
 export default function App() {
   return (
     <StoreProvider>
-      <div className="stage">
-        <SidePanel />
-        <Phone />
-      </div>
+      <Shell />
     </StoreProvider>
   );
 }

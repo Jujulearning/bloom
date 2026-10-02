@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowRight, Bell, ChevronRight, Utensils, Wallet, ClipboardList, MapPin, Droplet, Minus, Plus, Lock, Download, Trash2, RefreshCw, Sparkles } from "lucide-react";
+import { ArrowRight, Bell, ChevronRight, Utensils, Wallet, ClipboardList, MapPin, Droplet, Minus, Plus, Lock, Download, Trash2, RefreshCw, Sparkles, HeartPulse, HandHeart, CalendarRange } from "lucide-react";
+import { HealthSnapshot } from "./Health";
 import { useStore } from "./useStore";
 import { trimester } from "./helpers";
 import { TopBar, Photo, Chip, Nutrient, SectionHead, Avatar, Disclaimer, Toggle, AfyaMark, Sheet } from "./ui";
@@ -60,6 +61,8 @@ export function Home() {
           <div className="tri-bar"><i style={{ width: `${(p.week / 40) * 100}%` }} /></div>
         </div>
       </section>
+
+      <HealthSnapshot />
 
       <section className="card checkin">
         <div className="checkin-head">
@@ -148,7 +151,15 @@ export function Home() {
         <button onClick={() => nav.go("budget")}><Wallet size={20} /><b>Nourish on a budget</b><small>A simple grocery plan</small></button>
         <button onClick={() => nav.go("visit")}><ClipboardList size={20} /><b>For my visit</b><small>{state.visitQs.length} question{state.visitQs.length === 1 ? "" : "s"} saved</small></button>
         <button onClick={() => nav.go("support")}><MapPin size={20} /><b>Support near you</b><small>A little extra support</small></button>
+        <button onClick={() => nav.go("health")}><HeartPulse size={20} /><b>Blood pressure</b><small>Log a reading, see your trend</small></button>
+        <button onClick={() => nav.go("timeline")}><CalendarRange size={20} /><b>My 1,000 days</b><small>Your journey over time</small></button>
       </div>
+
+      <button className="card support-card" onClick={() => nav.go("life")}>
+        <HandHeart size={22} />
+        <div><p className="eyebrow">Life & resources</p><p>{state.sdoh.done ? "See your support plan for food, rides and more." : "Food, rides, housing, stress: a few private questions can point you to real help."}</p></div>
+        <ArrowRight size={18} />
+      </button>
 
       <Disclaimer />
     </div>
@@ -232,8 +243,8 @@ export function Profile() {
         </div>
 
         <div className="card about">
-          <p className="eyebrow">About this prototype</p>
-          <p className="muted">A concept demo of Amara Health with sample content. The <b>Food Library</b> and <b>Afya</b> are the planned first release. The Village, recipes and planning tools come next, and provider tools later.</p>
+          <p className="eyebrow">About this demo</p>
+          <p className="muted">An interactive Amara Health demo with sample content for Maya. Try anything, then reset to start fresh.</p>
           <div className="about-actions">
             <button className="btn btn-soft" onClick={() => { dispatch({ type: "set", patch: { onboarded: false } }); nav.tab("home"); }}><Sparkles size={16} /> Replay onboarding</button>
             <button className="btn btn-ghost" onClick={() => { dispatch({ type: "reset" }); nav.tab("home"); }}><RefreshCw size={16} /> Reset demo</button>

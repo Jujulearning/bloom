@@ -2,7 +2,7 @@ import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from "r
 import { POSTS, MAYA } from "./data";
 import { Ctx } from "./useStore";
 
-const KEY = "amara-demo-v1";
+const KEY = "amara-demo-v2";
 
 
 const initial = {
@@ -30,6 +30,33 @@ const initial = {
   chat: [],
   afya: [],
   grocery: null,
+  bp: [
+    { week: 12, s: 112, d: 70, when: "Clinic" }, { week: 16, s: 114, d: 72, when: "Clinic" }, { week: 19, s: 116, d: 72 },
+    { week: 20, s: 118, d: 74, when: "Clinic" }, { week: 22, s: 121, d: 76 }, { week: 23, s: 124, d: 78 }, { week: 24, s: 126, d: 80 },
+  ],
+  weight: [{ week: 8, gain: 1 }, { week: 12, gain: 2 }, { week: 16, gain: 5 }, { week: 20, gain: 9 }, { week: 24, gain: 13 }],
+  symptoms: [
+    { week: 22, day: "Mon", list: ["Fatigue", "Heartburn"] }, { week: 22, day: "Thu", list: ["Fatigue"] }, { week: 23, day: "Tue", list: ["Fatigue", "Trouble sleeping"] },
+    { week: 23, day: "Sat", list: ["Heartburn"] }, { week: 24, day: "Mon", list: ["Fatigue"] }, { week: 24, day: "Wed", list: ["Fatigue", "Constipation"] },
+  ],
+  weekly: [
+    { week: 18, energy: 4, foods: 5 }, { week: 19, energy: 4, foods: 6 }, { week: 20, energy: 3.5, foods: 6 }, { week: 21, energy: 3, foods: 7 },
+    { week: 22, energy: 2.5, foods: 8 }, { week: 23, energy: 2.5, foods: 9 }, { week: 24, energy: 3, foods: 10 },
+  ],
+  visits: [
+    { week: 8, title: "First prenatal visit", note: "Confirmed pregnancy, started prenatal vitamin" },
+    { week: 12, title: "First-trimester visit", note: "BP 112/70 · labs drawn" },
+    { week: 16, title: "Routine visit", note: "BP 114/72 · feeling good" },
+    { week: 20, title: "Anatomy scan", note: "BP 118/74 · baby growing well" },
+    { week: 25, title: "Next visit & glucose screening", note: "Bring: fatigue, iron question, BP trend", upcoming: true },
+  ],
+  baby: {
+    name: "Ama", age: "4 months (sample)", feeding: "breastfeeding + some bottles",
+    weights: [{ month: 0, kg: 3.3 }, { month: 1, kg: 4.3 }, { month: 2, kg: 5.3 }, { month: 3, kg: 6.0 }, { month: 4, kg: 6.6 }],
+    milestones: [1, 2],
+    feeds: [{ time: "6:10", type: "Breastfeed" }, { time: "9:30", type: "Breastfeed" }, { time: "12:45", type: "Bottle" }],
+  },
+  sdoh: { done: false, share: false, chw: false, answers: { food: "Sometimes", transport: "Yes", housing: "No", utilities: "No", support: "Sometimes", stress: "Several days", safety: "Yes", work: "Yes" } },
   privacy: { shareWithProvider: false, anonymousDefault: false, showWeek: true, personalization: true, research: false },
   notifications: { checkins: true, village: true, tips: true, appointments: true },
   community: { dms: false, showInRooms: true },
@@ -79,6 +106,13 @@ function reducer(s, a) {
     case "privacy": return { ...s, privacy: { ...s.privacy, [a.k]: !s.privacy[a.k] } };
     case "notifications": return { ...s, notifications: { ...s.notifications, [a.k]: !s.notifications[a.k] } };
     case "community": return { ...s, community: { ...s.community, [a.k]: !s.community[a.k] } };
+    case "bp": return { ...s, bp: [...s.bp, a.reading] };
+    case "weight": return { ...s, weight: [...s.weight.filter((w) => w.week !== a.entry.week), a.entry] };
+    case "symptom": return { ...s, symptoms: [...s.symptoms, a.entry] };
+    case "babyWeight": { const w = s.baby.weights; return { ...s, baby: { ...s.baby, weights: [...w, { month: w[w.length - 1].month + 1, kg: a.kg }] } }; }
+    case "milestone": { const m = s.baby.milestones; return { ...s, baby: { ...s.baby, milestones: m.includes(a.id) ? m.filter((x) => x !== a.id) : [...m, a.id] } }; }
+    case "feed": return { ...s, baby: { ...s.baby, feeds: [...s.baby.feeds, a.feed] } };
+    case "sdoh": return { ...s, sdoh: { ...s.sdoh, ...a.patch } };
     case "reset": return { ...initial };
     default: return s;
   }

@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { ArrowRight, Check, ClipboardList, CalendarDays, Sprout, Droplet, Plus, Trash2, Share2, FileText, Lock, ChevronRight, MapPin, Phone, ShoppingBasket, Stethoscope, Bus, HeartHandshake, Baby, Building2, HandHeart, Sparkles } from "lucide-react";
+import { ArrowRight, Check, ClipboardList, CalendarDays, Sprout, Droplet, Plus, Trash2, Share2, FileText, Lock, ChevronRight, MapPin, Phone, ShoppingBasket, Stethoscope, Bus, HeartHandshake, Baby, Building2, HandHeart, Sparkles, HeartPulse, CalendarRange } from "lucide-react";
+import { bpStatus } from "./helpers";
 import { useStore } from "./useStore";
 import { TopBar, Nutrient, SectionHead, Disclaimer, AfyaMark, Photo, Sheet, Empty } from "./ui";
 import { RESOURCES, FOODS, CHECKIN } from "./data";
 import { trimester } from "./helpers";
+import { SDOH_QUESTIONS } from "./data";
 
 const ICONS = { ShoppingBasket, Stethoscope, Bus, HeartHandshake, Baby, Building2, HandHeart };
 const FOCUS = ["Explore iron-rich foods", "Try 3 different vegetables", "Prepare one freezer-friendly meal", "Ask provider about fatigue"];
@@ -82,10 +84,12 @@ export function Journey() {
           </div>
         ))}
 
-        <div className="card later">
-          <p className="eyebrow">Coming later</p>
-          <h3 className="serif-lg">Postpartum & your baby's first foods</h3>
-          <p className="muted small">Amara will continue with you after birth, with postpartum nourishment, feeding support and your baby's first 1,000 days.</p>
+        <SectionHead title="Over time" />
+        <div className="tools">
+          <button onClick={() => nav.go("health")}><HeartPulse size={20} /><b>Blood pressure</b><small>Latest {state.bp[state.bp.length - 1].s}/{state.bp[state.bp.length - 1].d} · see trend</small></button>
+          <button onClick={() => nav.go("timeline")}><CalendarRange size={20} /><b>My 1,000 days</b><small>Pregnancy to age two</small></button>
+          <button onClick={() => nav.go("baby")}><Baby size={20} /><b>Baby & growth</b><small>Growth, milestones, feeding</small></button>
+          <button onClick={() => nav.go("postpartum")}><HeartHandshake size={20} /><b>Postpartum care</b><small>Recovery, mood and BP</small></button>
         </div>
       </div>
     </div>
@@ -186,7 +190,7 @@ function Sec({ k, label, children, inc, setInc }) {
 export function Summary() {
   const { state, dispatch, notify } = useStore();
   const p = state.profile;
-  const [inc, setInc] = useState({ concern: true, focus: true, foods: true, checkins: true, questions: true });
+  const [inc, setInc] = useState({ bp: true, concern: true, focus: true, foods: true, checkins: true, social: true, questions: true });
   const [share, setShare] = useState(false);
   const recentTired = state.checkins.filter((c) => c.mood === "Tired").length;
   const qs = state.visitQs.filter((q) => q.share);
@@ -200,10 +204,12 @@ export function Summary() {
             <div><p className="eyebrow">Amara · prepared by {p.name}</p><h2 className="display-sm">{p.name}'s Nutrition Snapshot</h2></div>
           </div>
           <div className="sum-meta"><span><b>Week {p.week}</b>{trimester(p.week)}</span><span><b>{p.diet}</b>Eating pattern</span><span><b>{p.cuisines[0]}</b>Food traditions</span></div>
+          <Sec inc={inc} setInc={setInc} k="bp" label="Blood pressure"><p>{state.bp.slice(-4).map((r) => `Wk ${r.week}: ${r.s}/${r.d}`).join(" · ")}</p><p className="small muted">Latest: {bpStatus(state.bp[state.bp.length - 1].s, state.bp[state.bp.length - 1].d).label.toLowerCase()} · gradual rise since week 12</p></Sec>
           <Sec inc={inc} setInc={setInc} k="concern" label="Recent concern"><p>Fatigue {recentTired ? `(reported tired on ${recentTired} of the last ${state.checkins.length} check-ins)` : ""}</p></Sec>
           <Sec inc={inc} setInc={setInc} k="focus" label="Nutrition focus"><p>Iron, with protein and folate</p></Sec>
           <Sec inc={inc} setInc={setInc} k="foods" label="Foods frequently eaten"><div className="chips">{["Beans", "Chicken", "Plantain", "Spinach", "Jollof rice"].map((f) => <span key={f} className="alt">{f}</span>)}</div></Sec>
           <Sec inc={inc} setInc={setInc} k="checkins" label="Check-ins this week"><p>{state.checkins.map((c) => `${c.day}: ${c.mood}`).join(" · ")}</p></Sec>
+          {state.sdoh.done && state.sdoh.share && <Sec inc={inc} setInc={setInc} k="social" label="Life & resources (shared by Maya)"><p>{SDOH_QUESTIONS.filter((q) => q.need.includes(state.sdoh.answers[q.id])).map((q) => q.topic).join(" · ") || "No needs flagged"}</p></Sec>}
           <Sec inc={inc} setInc={setInc} k="questions" label={`Questions for my provider (${qs.length})`}><ol>{qs.map((q) => <li key={q.id}>“{q.text}”</li>)}</ol></Sec>
           <p className="sum-foot">Self-reported by the patient through Amara for discussion. Not a clinical record.</p>
         </div>
@@ -229,9 +235,9 @@ export function Summary() {
   );
 }
 
-export function Support() {
+export function Support({ open: open0 = null }) {
   const { notify } = useStore();
-  const [open, setOpen] = useState(null);
+  const [open, setOpen] = useState(open0);
   const cat = RESOURCES.find((r) => r.id === open);
   return (
     <div>

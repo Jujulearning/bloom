@@ -612,3 +612,37 @@ export const MAYA = {
   symptoms: ["Fatigue"],
   goals: ["Get enough iron", "Keep eating foods from home", "Simple weeknight meals"],
 };
+
+// Baby growth: approximate WHO weight-for-age range for girls (kg), for illustration
+export const BABY_GROWTH = [
+  { month: 0, lo: 2.4, hi: 4.2 }, { month: 1, lo: 3.2, hi: 5.5 }, { month: 2, lo: 4.0, hi: 6.6 },
+  { month: 3, lo: 4.6, hi: 7.5 }, { month: 4, lo: 5.1, hi: 8.2 }, { month: 6, lo: 5.7, hi: 9.3 },
+  { month: 9, lo: 6.6, hi: 10.5 }, { month: 12, lo: 7.0, hi: 11.5 },
+];
+
+export const MILESTONES = [
+  { id: 1, name: "Smiles at people", age: "2 months" },
+  { id: 2, name: "Holds head steady", age: "4 months" },
+  { id: 3, name: "Rolls over", age: "4–6 months" },
+  { id: 4, name: "Babbles and laughs", age: "6 months" },
+  { id: 5, name: "Sits without support", age: "9 months" },
+  { id: 6, name: "Responds to own name", age: "9 months" },
+  { id: 7, name: "Waves bye-bye", age: "12 months" },
+  { id: 8, name: "Pulls up to stand", age: "12 months" },
+  { id: 9, name: "Says a first word", age: "12 months" },
+  { id: 10, name: "Walks on their own", age: "15–18 months" },
+  { id: 11, name: "Points to show you things", age: "15 months" },
+  { id: 12, name: "Uses two-word phrases", age: "24 months" },
+];
+
+// Social needs check-in (adapted from common screening tools, including the Hunger Vital Sign)
+export const SDOH_QUESTIONS = [
+  { id: "food", topic: "Food", q: "In the past 12 months, did you worry your food would run out before you had money to buy more?", options: ["Often", "Sometimes", "Never"], need: ["Often", "Sometimes"], help: "WIC and SNAP can stretch your grocery budget, and local food banks offer free groceries. Amara's budget planner can help too.", cta: "See food support", resource: "food" },
+  { id: "housing", topic: "Housing", q: "Are you worried about losing your housing, or finding it hard to pay rent?", options: ["Yes", "No", "Prefer not to say"], need: ["Yes"], help: "Call or text 211 to reach local help with rent, housing and utilities.", cta: "See housing help", resource: "housing" },
+  { id: "transport", topic: "Transportation", q: "In the past year, has a lack of transportation kept you from appointments or getting groceries?", options: ["Yes", "No"], need: ["Yes"], help: "Medicaid often covers rides to prenatal visits, and some clinics offer ride vouchers. You can also add this to your visit summary.", cta: "See ride options", resource: "transport" },
+  { id: "utilities", topic: "Utilities", q: "In the past year, has a utility company threatened to shut off your services?", options: ["Yes", "No"], need: ["Yes"], help: "Energy assistance programs and 211 can help keep the lights and heat on.", cta: "Get utility help", resource: "housing" },
+  { id: "support", topic: "Support at home", q: "Do you have someone you can count on for help, like a ride or a meal?", options: ["Yes, usually", "Sometimes", "Not really"], need: ["Sometimes", "Not really"], help: "Community doulas and The Village can be part of your circle. You don't have to do this alone.", cta: "Find support near you", resource: "orgs" },
+  { id: "stress", topic: "Stress & mood", q: "In the last 2 weeks, how often have you felt down, anxious or overwhelmed?", options: ["Not at all", "Several days", "More than half the days", "Nearly every day"], need: ["More than half the days", "Nearly every day"], help: "You deserve support. The National Maternal Mental Health Hotline is free and confidential 24/7 at 1-833-TLC-MAMA.", cta: "See mental wellness support", resource: "mental" },
+  { id: "safety", topic: "Safety", q: "Do you feel safe in your relationship and at home?", options: ["Yes", "Not always", "Prefer not to say"], need: ["Not always"], help: "Confidential help is available any time from the National Domestic Violence Hotline: 1-800-799-7233, or text START to 88788.", cta: "See support options", resource: "mental" },
+  { id: "work", topic: "Work", q: "Is work making it hard to get to appointments, eat regularly or rest?", options: ["Yes", "No", "Not working right now"], need: ["Yes"], help: "Under the Pregnant Workers Fairness Act, many employers must offer reasonable accommodations like breaks, time off for appointments, or a place to sit.", cta: "Explore support", resource: "orgs" },
+];

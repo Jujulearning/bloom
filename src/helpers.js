@@ -36,3 +36,16 @@ export function makePlan({ amount, people, days, have, diet, cuisines }) {
   ].filter(Boolean);
   return { amount, people, days, items, meals, total };
 }
+
+export function bpStatus(s, d) {
+  if (s >= 160 || d >= 110) return { level: 3, label: "Severe range", short: "Severe", text: "Get care now: call your provider or go to labor & delivery." };
+  if (s >= 140 || d >= 90) return { level: 2, label: "High", short: "High", text: "Call your provider today. A reading of 140/90 or higher should be checked the same day." };
+  if (s >= 120 || d >= 80) return { level: 1, label: "A little higher", short: "Watch", text: "Still under 140/90. Keep tracking and mention it at your next visit." };
+  return { level: 0, label: "Typical range", short: "Typical", text: "Keep checking as often as your provider suggests." };
+}
+
+// Approximate total weight-gain range (lb) for pre-pregnancy BMI 18.5–24.9 (25–35 lb total)
+export function weightBand(week) {
+  if (week <= 13) return { lo: Math.round((1.1 * week) / 13 * 10) / 10, hi: Math.round((4.4 * week) / 13 * 10) / 10 };
+  return { lo: Math.round((1.1 + 0.8 * (week - 13)) * 10) / 10, hi: Math.round((4.4 + 1.0 * (week - 13)) * 10) / 10 };
+}
