@@ -5,6 +5,8 @@ import { AfyaMark, Nutrient, Photo, Disclaimer, TopBar, SaveBtn, Sheet } from ".
 import { EscalationCard, ScopeNote, ScopeList, PrivacyNote, HelpButton } from "./Safety";
 import { AFYA_PROMPTS, FOODS, QA, RECIPES } from "./data";
 import { makePlan, trimester, assessMessage, piiCheck, bpStatus } from "./helpers";
+import { knowledgeReply } from "./afyaKnowledge";
+import { analyzeNutrients } from "./nutrition";
 
 const ACTIONS = ["Find foods I already eat", "Build a meal", "Create a grocery list", "Help me prepare a question for my provider"];
 
@@ -99,7 +101,7 @@ function respond(raw, p) {
     };
   }
 
-  if (/cook|lazy|no energy to make|takeout|easy/.test(t)) {
+  if (/(don.?t|do not) (feel like|want to) cook|no.?cook|too tired to cook|lazy|takeout|no energy to make/.test(t)) {
     return {
       text: `Totally fair. Some days are no-cook days. A few assemble-and-eat ideas:`,
       list: [
@@ -112,6 +114,12 @@ function respond(raw, p) {
     };
   }
 
+  const qa = QA.find((x) => x.match.some((m) => t.includes(m)));
+  if (qa) return { text: `${qa.answer} ${qa.why}`, note: qa.considerations[0], nutrients: qa.nutrients, source: qa.source };
+
+  const known = knowledgeReply(raw, p);
+  if (known) return known;
+
   const food = FOODS.find((f) => t.includes(f.name.toLowerCase()));
   if (food) {
     return { text: `${food.name} (${food.origin}): ${food.why} ${food.considerations[0]}`, foods: [food.id], nutrients: food.nutrients, actions: ["Build a meal", "Find foods I already eat"] };
@@ -122,12 +130,10 @@ function respond(raw, p) {
     return { text: `Here's how I'd adapt ${recipe.name} for you: keep it under 30 minutes by using canned or frozen shortcuts, make enough for ${p.household} plus leftovers for lunch, and add a vitamin C side to help with iron. ${recipe.swaps[0]} also works.`, recipes: [recipe.id] };
   }
 
-  const qa = QA.find((x) => x.match.some((m) => t.includes(m)));
-  if (qa) return { text: `${qa.answer} ${qa.why}`, note: qa.considerations[0], nutrients: qa.nutrients, source: qa.source };
-
   return {
-    text: `I'm here for food questions, big and small. At ${p.week} weeks (${trimester(p.week).toLowerCase()}), I'm keeping an eye on iron, protein, folate and calcium, and I'll always start from the ${homeFoods || "foods you"} love.`,
-    ask: "Would you like me to…",
+    text: `I don't have a good answer for that one yet, ${name}, and I'd rather not guess. If it's about your health, it's a great one for your care team, and I can save it for your next visit. Meanwhile, at ${p.week} weeks (${trimester(p.week).toLowerCase()}) I'm keeping an eye on iron, protein, folate and calcium, starting from the ${homeFoods || "foods you"} love.`,
+    questions: [raw.trim().replace(/\?*$/, "?")],
+    ask: "Or would you like me to…",
     actions: ACTIONS,
   };
 }
@@ -154,7 +160,38 @@ export function Afya({ ask }) {
 
   const add = (m) => dispatch({ type: "afyaAdd", msg: m });
 
-  const send = (q) => {
+  // What Afya knows about her, sent with each question so answers feel personal. No name or identifiers.
+  const context = () => {
+    const nut = analyzeNutrients(state);
+    const last = bp[bp.length - 1];
+    return [
+      `Stage: ${p.stage}${p.stage === "Pregnant" ? `, week ${p.week} (${trimester(p.week).toLowerCase()})` : ""}`,
+      `Cuisines: ${p.cuisines.join(", ")}. Foods she loves: ${p.loves.join(", ")}. Avoids: ${p.avoids.join(", ") || "none"}.`,
+      `Diet: ${p.diet}. Allergies: ${p.allergies.join(", ")}. Cooking time: ${p.cookTime}. Budget: ${p.budget}. Household: ${p.household}.`,
+      `Recent check-ins: ${state.checkins.map((c) => c.mood).join(", ")}.`,
+      `Latest blood pressure ${last.s}/${last.d}${bpRising ? `, up from ${bp[0].s}/${bp[0].d} at week ${bp[0].week}` : ""}.`,
+      `Prenatal vitamin: ${state.prenatal || "not sure"}. Food log looks low on: ${nut.gaps.map((g) => g.short).join(", ") || "nothing notable"}.`,
+    ].join("\n");
+  };
+
+  const askAI = async (body) => {
+    const history = [...msgs, { from: "me", text: body }].filter((m) => m.text && !m.escalate).slice(-10)
+      .map((m) => ({ role: m.from === "me" ? "user" : "assistant", content: m.text }));
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const r = await fetch("/api/afya", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ messages: history, context: context() }), signal: ctrl.signal });
+      if (!r.ok) return null;
+      const j = await r.json();
+      return j.text || null;
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  const send = async (q) => {
     const body = (q ?? text).trim();
     if (!body) return;
     const found = piiCheck(body);
@@ -163,10 +200,22 @@ export function Afya({ ask }) {
     setText("");
     add({ from: "me", text: body });
     setTyping(true);
-    setTimeout(() => {
-      add({ from: "afya", ...respond(body, p) });
-      setTyping(false);
-    }, 900 + Math.min(body.length * 10, 600));
+    const started = Date.now();
+    // Safety first: emergencies, crisis and medication questions are always handled by Afya's built-in rules,
+    // and suggested prompts use the richer built-in cards. Everything else goes to the live AI when it's set up.
+    const risk = assessMessage(body);
+    let reply = null;
+    if (!risk && !prompts.includes(body) && !AFYA_PROMPTS.includes(body)) {
+      const ai = await askAI(body);
+      if (ai) {
+        const lower = ai.toLowerCase();
+        const foods = FOODS.filter((f) => lower.includes(f.name.toLowerCase())).slice(0, 3).map((f) => f.id);
+        reply = { text: ai, foods: foods.length ? foods : undefined, ai: true };
+      }
+    }
+    if (!reply) reply = respond(body, p);
+    const wait = Math.max(0, 700 - (Date.now() - started));
+    setTimeout(() => { add({ from: "afya", ...reply }); setTyping(false); }, wait);
   };
 
   const doAction = (a, m) => {
@@ -233,7 +282,7 @@ export function Afya({ ask }) {
           <div key={k} className="bubble me-b"><p>{m.text}</p></div>
         ) : (
           <div key={k} className={"bubble afya-b" + (m.escalate ? " urgent" : "")}>
-            <p>{m.text}</p>
+            <p className={m.ai ? "ai-text" : undefined}>{m.text}</p>
             {m.escalate && <EscalationCard kind={m.escalate} bp={m.bp} />}
             {m.scope && <ScopeNote compact />}
             {m.list && <ol className="afya-list">{m.list.map(([a, b]) => <li key={a}><b>{a}</b><span>{b}</span></li>)}</ol>}
@@ -281,7 +330,7 @@ export function Afya({ ask }) {
         <PrivacyNote items={pii} />
         <p className="afya-disc">Afya offers food guidance only: no diagnoses, prescriptions or medication changes. In an emergency, call 911.</p>
         <form className="composer" onSubmit={(e) => { e.preventDefault(); send(); }}>
-          <input value={text} onChange={(e) => { setText(e.target.value); if (pii.length) setPii([]); }} placeholder="Ask Afya anything about food…" aria-label="Message Afya" />
+          <input value={text} onChange={(e) => { setText(e.target.value); if (pii.length) setPii([]); }} placeholder="Ask Afya anything…" aria-label="Message Afya" />
           <button className="send" disabled={!text.trim()} aria-label="Send"><Send size={18} /></button>
         </form>
       </div>

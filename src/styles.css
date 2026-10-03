@@ -870,3 +870,5 @@ form .btn-block, .pad > .btn-block { margin-top: 22px; }
 .partner-toggle b { display: block; font-weight: 500; color: var(--olive-deep); }
 .partner-toggle small { color: var(--ink-soft); font-size: .8rem; }
 .partner-list { display: grid; gap: 8px; padding: 0 6px 0 22px; margin-bottom: 8px; color: var(--ink-soft); font-size: .9rem; }
+
+.ai-text { white-space: pre-line; }
