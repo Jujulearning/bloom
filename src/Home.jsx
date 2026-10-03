@@ -4,7 +4,9 @@ import { HealthSnapshot } from "./Health";
 import { RiskCards, HelpButton } from "./Safety";
 import { riskSignals } from "./helpers";
 import { useStore } from "./useStore";
-import { trimester } from "./helpers";
+import { isPP, stageLabel, phase, babyThisWeek, postpartumThisWeek, dueDateFor, PREG_MIN, PREG_MAX, PP_MAX } from "./stage";
+import { MealCapture } from "./MealLog";
+import { analyzeNutrients } from "./nutrition";
 import { TopBar, Photo, Chip, Nutrient, SectionHead, Avatar, Disclaimer, Toggle, AfyaMark, Sheet } from "./ui";
 import { CHECKIN, CHECKIN_FOCUS, NUTRIENTS, RECIPES, FOODS, ONBOARD_CUISINES, DIET_PATTERNS, ALLERGIES } from "./data";
 
@@ -14,14 +16,14 @@ const greet = () => {
 };
 
 
-function WeekRing({ week }) {
-  const r = 34, c = 2 * Math.PI * r, pct = Math.min(week / 40, 1);
+function WeekRing({ value, total, label }) {
+  const r = 34, c = 2 * Math.PI * r, pct = Math.min(value / total, 1);
   return (
     <svg width="88" height="88" viewBox="0 0 88 88" className="week-ring" aria-hidden="true">
       <circle cx="44" cy="44" r={r} fill="none" stroke="rgba(250,246,239,.18)" strokeWidth="5" />
       <circle cx="44" cy="44" r={r} fill="none" stroke="#E0B14C" strokeWidth="5" strokeLinecap="round" strokeDasharray={`${c * pct} ${c}`} transform="rotate(-90 44 44)" />
-      <text x="44" y="42" textAnchor="middle" className="ring-num">{week}</text>
-      <text x="44" y="58" textAnchor="middle" className="ring-lbl">WEEKS</text>
+      <text x="44" y="42" textAnchor="middle" className="ring-num">{value}</text>
+      <text x="44" y="58" textAnchor="middle" className="ring-lbl">{label}</text>
     </svg>
   );
 }
@@ -30,7 +32,8 @@ export function Home() {
   const { state, dispatch, nav, notify } = useStore();
   const p = state.profile;
   const mood = state.checkin;
-  const focus = CHECKIN_FOCUS[mood || "Tired"];
+  const f0 = CHECKIN_FOCUS[mood || "Tired"];
+  const focus = isPP(p) && f0.pp ? { ...f0, ...f0.pp } : f0;
   const [nutrient, setNutrient] = useState(focus.nutrient);
   const saved = RECIPES.find((r) => r.id === state.savedRecipes[state.savedRecipes.length - 1]) || RECIPES[0];
   const villagePosts = state.posts.filter((x) => ["p2", "p3"].includes(x.id));
@@ -56,12 +59,12 @@ export function Home() {
       </header>
 
       <section className="week-card" onClick={() => nav.tab("journey")}>
-        <WeekRing week={p.week} />
+        {isPP(p) ? <WeekRing value={p.ppWeek} total={p.ppWeek < 12 ? 12 : 52} label="WKS PP" /> : <WeekRing value={p.week} total={40} label="WEEKS" />}
         <div>
-          <p className="eyebrow light">{trimester(p.week)}</p>
-          <h2>Week {p.week}</h2>
-          <p>Your baby is about the size of an ear of corn, and growing quickly.</p>
-          <div className="tri-bar"><i style={{ width: `${(p.week / 40) * 100}%` }} /></div>
+          <p className="eyebrow light">{phase(p)}</p>
+          <h2>{stageLabel(p)}</h2>
+          {isPP(p) ? <p>{postpartumThisWeek(p.ppWeek)}</p> : <p>Your baby is about the size of {babyThisWeek(p.week).size}. {babyThisWeek(p.week).note}</p>}
+          <div className="tri-bar"><i style={{ width: `${(isPP(p) ? Math.min(p.ppWeek / 12, 1) : p.week / 40) * 100}%` }} /></div>
         </div>
       </section>
 
@@ -73,6 +76,14 @@ export function Home() {
           <RiskCards signals={riskSignals(state)} />
         </>
       )}
+
+      <section className="card plate-card">
+        <div className="plate-head">
+          <div><p className="eyebrow">Today's plate</p><h3>Log a meal</h3></div>
+          <button className="link" onClick={() => nav.go("nutrients", { tab: "log" })}>{analyzeNutrients(state).kcalToday} cal today <ArrowRight size={14} /></button>
+        </div>
+        <MealCapture compact onPick={() => nav.go("nutrients", { tab: "log" })} />
+      </section>
 
       <section className="card checkin">
         <div className="checkin-head">
@@ -91,7 +102,7 @@ export function Home() {
 
       <section className="card today">
         <p className="eyebrow">Today for you</p>
-        <p className="why-you">{mood ? `Because you're feeling ${mood.toLowerCase()} today` : `Because you've checked in tired ${state.checkins.filter((c) => c.mood === "Tired").length} times this week`} · week {p.week}</p>
+        <p className="why-you">{mood ? `Because you're feeling ${mood.toLowerCase()} today` : `Because you've checked in tired ${state.checkins.filter((c) => c.mood === "Tired").length} times this week`} · {stageLabel(p).toLowerCase()}</p>
         <h3 className="serif-lg">{focus.title}</h3>
         <p className="muted">{focus.body}</p>
         <button className="btn btn-primary" onClick={() => nav.go(...focus.to)}>{focus.cta} <ArrowRight size={16} /></button>
@@ -202,20 +213,34 @@ export function Profile() {
           <Avatar who="maya" size={64} />
           <div>
             <h2 className="display-sm">{p.name}</h2>
-            <p className="muted">{p.stage} · week {p.week} · {trimester(p.week)}</p>
+            <p className="muted">{stageLabel(p)} · {phase(p)}</p>
           </div>
         </div>
 
         <div className="card stage-edit">
-          <p className="eyebrow">Pregnancy stage</p>
-          <div className="week-picker small">
-            <button className="round-btn" onClick={() => set({ week: Math.max(4, p.week - 1) })} aria-label="Previous week"><Minus size={18} /></button>
-            <div><span className="week-num">{p.week}</span><span className="week-lbl">weeks</span></div>
-            <button className="round-btn" onClick={() => set({ week: Math.min(41, p.week + 1) })} aria-label="Next week"><Plus size={18} /></button>
-          </div>
+          <p className="eyebrow">Where you are</p>
           <div className="chips center-chips">
             {["Pregnant", "Postpartum"].map((s) => <Chip small key={s} active={p.stage === s} onClick={() => set({ stage: s })}>{s}</Chip>)}
           </div>
+          {isPP(p) ? (
+            <>
+              <div className="week-picker small">
+                <button className="round-btn" onClick={() => set({ ppWeek: Math.max(0, p.ppWeek - 1) })} aria-label="Fewer weeks"><Minus size={18} /></button>
+                <div><span className="week-num">{p.ppWeek}</span><span className="week-lbl">weeks since birth</span></div>
+                <button className="round-btn" onClick={() => set({ ppWeek: Math.min(PP_MAX, p.ppWeek + 1) })} aria-label="More weeks"><Plus size={18} /></button>
+              </div>
+              <p className="muted small center">Baby born at {p.birthWeek} weeks · <button className="link" onClick={() => set({ birthWeek: p.birthWeek >= 42 ? 37 : p.birthWeek + 1 })}>change</button></p>
+            </>
+          ) : (
+            <>
+              <div className="week-picker small">
+                <button className="round-btn" onClick={() => set({ week: Math.max(PREG_MIN, p.week - 1) })} aria-label="Previous week"><Minus size={18} /></button>
+                <div><span className="week-num">{p.week}</span><span className="week-lbl">weeks pregnant</span></div>
+                <button className="round-btn" onClick={() => set({ week: Math.min(PREG_MAX, p.week + 1) })} aria-label="Next week"><Plus size={18} /></button>
+              </div>
+              <p className="muted small center">Estimated due date · {dueDateFor(p.week)}</p>
+            </>
+          )}
         </div>
 
         <h4 className="group-title">Food & culture</h4>

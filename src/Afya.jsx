@@ -4,9 +4,10 @@ import { useStore } from "./useStore";
 import { AfyaMark, Nutrient, Photo, Disclaimer, TopBar, SaveBtn, Sheet } from "./ui";
 import { EscalationCard, ScopeNote, ScopeList, PrivacyNote, HelpButton } from "./Safety";
 import { AFYA_PROMPTS, FOODS, QA, RECIPES } from "./data";
-import { makePlan, trimester, assessMessage, piiCheck, bpStatus } from "./helpers";
+import { makePlan, assessMessage, piiCheck, bpStatus } from "./helpers";
 import { knowledgeReply } from "./afyaKnowledge";
 import { analyzeNutrients } from "./nutrition";
+import { isPP, stageLabel, phase } from "./stage";
 
 const ACTIONS = ["Find foods I already eat", "Build a meal", "Create a grocery list", "Help me prepare a question for my provider"];
 
@@ -36,7 +37,7 @@ function respond(raw, p) {
 
   if (t.includes("another combination")) {
     const base = raw.split("with").pop().trim();
-    return { text: `Here's another way to build around ${base}: try it with grilled fish for protein and omega-3s, sautéed okra and spinach for folate, and sliced tomatoes and peppers for vitamin C, which helps you absorb iron. It works well for week ${p.week}, when your iron and protein needs are climbing.`, nutrients: ["Protein", "Omega-3", "Folate", "Vitamin C"], actions: ["Build a meal", "Create a grocery list"] };
+    return { text: `Here's another way to build around ${base}: try it with grilled fish for protein and omega-3s, sautéed okra and spinach for folate, and sliced tomatoes and peppers for vitamin C, which helps you absorb iron. It works well at ${stageLabel(p).toLowerCase()}, when iron and protein matter so much.`, nutrients: ["Protein", "Omega-3", "Folate", "Vitamin C"], actions: ["Build a meal", "Create a grocery list"] };
   }
 
   if (/blood pressure|\bbp\b/.test(t)) {
@@ -50,7 +51,7 @@ function respond(raw, p) {
 
   if (/tired|exhausted|fatigue|no energy|sleepy/.test(t)) {
     return {
-      text: `Pregnancy itself can leave you tired. Since you're ${p.week} weeks, we can also look at foods rich in iron, folate, protein, and other nutrients that support you during this stage. You already love ${p.loves.slice(0, 3).join(", ").toLowerCase()}, which is a great start.`,
+      text: `${isPP(p) ? "Recovering from birth and caring for a newborn is exhausting." : "Pregnancy itself can leave you tired."} At ${stageLabel(p).toLowerCase()}, we can also look at foods rich in iron, folate, protein, and other nutrients that support you during this stage. You already love ${p.loves.slice(0, 3).join(", ").toLowerCase()}, which is a great start.`,
       nutrients: ["Iron", "Folate", "Protein"],
       ask: "Would you like me to…",
       actions: ACTIONS,
@@ -97,7 +98,7 @@ function respond(raw, p) {
   if (/doctor|provider|midwife|ask .*(about|my)|appointment|iron levels/.test(t)) {
     return {
       text: `Good thinking. Questions like these help you and your care team make decisions together. Here are a few you could bring:`,
-      questions: ["I've been more tired than usual. Should we check my iron?", "Should my prenatal vitamin change based on my iron levels?", "Are there nutrients I should prioritize this trimester?"],
+      questions: ["I've been more tired than usual. Should we check my iron?", "Should my prenatal vitamin change based on my iron levels?", isPP(p) ? "Are there nutrients I should prioritize while I recover and feed my baby?" : "Are there nutrients I should prioritize this trimester?"],
     };
   }
 
@@ -131,7 +132,7 @@ function respond(raw, p) {
   }
 
   return {
-    text: `I don't have a good answer for that one yet, ${name}, and I'd rather not guess. If it's about your health, it's a great one for your care team, and I can save it for your next visit. Meanwhile, at ${p.week} weeks (${trimester(p.week).toLowerCase()}) I'm keeping an eye on iron, protein, folate and calcium, starting from the ${homeFoods || "foods you"} love.`,
+    text: `I don't have a good answer for that one yet, ${name}, and I'd rather not guess. If it's about your health, it's a great one for your care team, and I can save it for your next visit. Meanwhile, at ${stageLabel(p).toLowerCase()} (${phase(p).toLowerCase()}) I'm keeping an eye on iron, protein, folate and calcium, starting from the ${homeFoods || "foods you"} love.`,
     questions: [raw.trim().replace(/\?*$/, "?")],
     ask: "Or would you like me to…",
     actions: ACTIONS,
@@ -165,7 +166,7 @@ export function Afya({ ask }) {
     const nut = analyzeNutrients(state);
     const last = bp[bp.length - 1];
     return [
-      `Stage: ${p.stage}${p.stage === "Pregnant" ? `, week ${p.week} (${trimester(p.week).toLowerCase()})` : ""}`,
+      `Stage: ${isPP(p) ? `postpartum, ${p.ppWeek} weeks since birth (${phase(p).toLowerCase()}), baby born at ${p.birthWeek} weeks, ${(p.feeding || "breastfeeding").toLowerCase()}. She is NOT pregnant.` : `pregnant, week ${p.week} (${phase(p).toLowerCase()})`}`,
       `Cuisines: ${p.cuisines.join(", ")}. Foods she loves: ${p.loves.join(", ")}. Avoids: ${p.avoids.join(", ") || "none"}.`,
       `Diet: ${p.diet}. Allergies: ${p.allergies.join(", ")}. Cooking time: ${p.cookTime}. Budget: ${p.budget}. Household: ${p.household}.`,
       `Recent check-ins: ${state.checkins.map((c) => c.mood).join(", ")}.`,
@@ -257,7 +258,7 @@ export function Afya({ ask }) {
       </header>
       {!!msgs.length && <button className="link new-chat" onClick={() => dispatch({ type: "set", patch: { afya: [] } })}>Start a new chat</button>}
       <div className="afya-context">
-        <span>Week {p.week}</span><span>{p.cuisines.slice(0, 2).join(" · ")}</span><span>{p.cookTime}</span><span>{p.budget}</span>
+        <span>{stageLabel(p)}</span><span>{p.cuisines.slice(0, 2).join(" · ")}</span><span>{p.cookTime}</span><span>{p.budget}</span>
       </div>
 
       <div className="afya-thread">
@@ -369,7 +370,7 @@ export function AfyaPlan() {
             <h1 className="display-sm">Red-red with plantain & wilted spinach</h1>
             <p>Built from foods you already love: <b>beans, plantain and spinach</b>. It fits your {p.cookTime.toLowerCase()} evenings and costs {r.costEst}.</p>
             <div className="why-box">
-              <p className="eyebrow">Why this, at week {p.week}</p>
+              <p className="eyebrow">Why this, at {stageLabel(p).toLowerCase()}</p>
               <ul>
                 <li><b>Iron + vitamin C</b> · black-eyed peas and spinach bring iron, and the tomatoes help you absorb it.</li>
                 <li><b>Folate</b> · beans and greens support your baby's growth.</li>

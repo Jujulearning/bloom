@@ -3,8 +3,9 @@ import { HeartPulse, Scale, Plus, AlertTriangle, Phone, ClipboardList, ArrowRigh
 import { useStore } from "./useStore";
 import { TopBar, SectionHead, Disclaimer, Chip, Toggle } from "./ui";
 import { BABY_GROWTH, MILESTONES, SDOH_QUESTIONS } from "./data";
-import { bpStatus, weightBand, trimester } from "./helpers";
+import { bpStatus, weightBand } from "./helpers";
 import { EscalationCard, HelpButton } from "./Safety";
+import { isPP, stamp, entryLabel, dayOf1000, phase, stageLabel, babyThisWeek, comingUp, babyAge } from "./stage";
 
 /* ---------- Small SVG line chart ---------- */
 function LineChart({ series, xKey = "week", h = 170, yMin, yMax, bands = [], refs = [], xLabel = "Week", unit = "" }) {
@@ -57,12 +58,13 @@ export function Health({ tab: tab0 = "Blood pressure" }) {
   const wt = state.weight;
   const lastW = wt[wt.length - 1];
   const band = weightBand(p.week);
+  const pp = isPP(p);
 
   const logBP = (e) => {
     e.preventDefault();
     const s = Number(sys), d = Number(dia);
     if (!s || !d || s < 60 || s > 250 || d < 30 || d > 160) { notify("Please check the numbers"); return; }
-    dispatch({ type: "bp", reading: { week: p.week, s, d, when: "Today" } });
+    dispatch({ type: "bp", reading: { ...stamp(p), s, d, when: "Today" } });
     setSys(""); setDia("");
     const status = bpStatus(s, d);
     setWarn(status.level >= 2 ? { ...status, bp: `${s}/${d}` } : null);
@@ -72,7 +74,7 @@ export function Health({ tab: tab0 = "Blood pressure" }) {
     e.preventDefault();
     const g = Number(lb);
     if (isNaN(g) || lb === "") return;
-    dispatch({ type: "weight", entry: { week: p.week, gain: g } });
+    dispatch({ type: "weight", entry: { ...stamp(p), gain: g } });
     setLb("");
     notify("Weight saved");
   };
@@ -93,7 +95,7 @@ export function Health({ tab: tab0 = "Blood pressure" }) {
               <div className={"card bp-hero lvl" + st.level}>
                 <HeartPulse size={22} />
                 <div>
-                  <p className="eyebrow">Latest reading · week {last.week}</p>
+                  <p className="eyebrow">Latest reading · {entryLabel(last, p)}</p>
                   <p className="bp-num">{last.s}<span>/</span>{last.d} <small>mmHg</small></p>
                   <p className="bp-status"><b>{st.label}.</b> {st.text}</p>
                 </div>
@@ -122,7 +124,7 @@ export function Health({ tab: tab0 = "Blood pressure" }) {
               <button className="link" onClick={() => { dispatch({ type: "addQ", text: `My blood pressure went from ${bp[0].s}/${bp[0].d} to ${last.s}/${last.d}. Is that something to watch?`, from: "Health" }); notify("Added to For My Visit"); }}><ClipboardList size={14} /> Add to For My Visit</button>
             </div>
             <div className="history">
-              {[...bp].reverse().map((r, i) => { const s2 = bpStatus(r.s, r.d); return <div key={i}><span>Week {r.week}{r.when ? ` · ${r.when}` : ""}</span><b>{r.s}/{r.d}</b><i className={"dot-lvl lvl" + s2.level} title={s2.label} /></div>; })}
+              {[...bp].reverse().map((r, i) => { const s2 = bpStatus(r.s, r.d); return <div key={i}><span className="cap">{entryLabel(r, p)}{r.when ? ` · ${r.when}` : ""}</span><b>{r.s}/{r.d}</b><i className={"dot-lvl lvl" + s2.level} title={s2.label} /></div>; })}
             </div>
             <div className="card warn-signs">
               <p className="eyebrow"><AlertTriangle size={13} /> Call right away if you notice</p>
@@ -138,7 +140,29 @@ export function Health({ tab: tab0 = "Blood pressure" }) {
           </>
         )}
 
-        {tab === "Weight" && (
+        {tab === "Weight" && pp && (
+          <>
+            <div className="card bp-hero lvl1">
+              <Scale size={22} />
+              <div>
+                <p className="eyebrow">Compared with before pregnancy · {lastW ? entryLabel(lastW, p) : ""}</p>
+                <p className="bp-num">{lastW?.gain > 0 ? "+" : ""}{lastW?.gain}<small> lb</small></p>
+                {lastW && lastW.pp == null && <p className="bp-status"><b>This is your last weight from pregnancy.</b> Log a new one whenever you're ready, there's no rush.</p>}
+                <p className="bp-status">After birth, most people lose weight gradually over 6 to 12 months. Nourishing food, sleep when you can, and gentle movement once your provider says it's okay matter more than the number. Please skip restrictive diets, especially while breastfeeding.</p>
+              </div>
+            </div>
+            <div className="card">
+              <LineChart series={[{ label: "Change", key: "gain", color: "#3E4A2E", data: wt }]} yMin={-10} yMax={40} unit=" lb" xLabel="Timeline week" />
+              <Legend items={[["#3E4A2E", "Change from before pregnancy"]]} />
+            </div>
+            <form className="card log-form row-form" onSubmit={logW}>
+              <label><span>Change from before pregnancy (lb)</span><input inputMode="decimal" value={lb} onChange={(e) => setLb(e.target.value.replace(/[^\d.-]/g, ""))} placeholder="8" /></label>
+              <button className="btn btn-primary" disabled={!lb}><Plus size={16} /> Save</button>
+            </form>
+          </>
+        )}
+
+        {tab === "Weight" && !pp && (
           <>
             <div className="card bp-hero lvl1">
               <Scale size={22} />
@@ -185,7 +209,7 @@ function SymptomLog() {
         <div className="chips">{opts.map((o) => <Chip small key={o} active={pick.includes(o)} onClick={() => toggle(o)}>{o}</Chip>)}</div>
         {pick.includes("Headache") && pick.includes("Swelling") ? <EscalationCard kind="urgent" /> : pick.some((p) => ["Headache", "Swelling", "Dizziness"].includes(p)) && <div className="alert soft"><AlertTriangle size={16} /><p>Headaches, swelling or dizziness can sometimes be linked to blood pressure. Check your blood pressure, and call your provider if it's 140/90 or higher or the symptom is severe.</p></div>}
         {pick.includes("Feeling low") && <div className="alert soft"><HeartHandshake size={16} /><p>You're not alone. The National Maternal Mental Health Hotline is free and confidential 24/7: call or text 1-833-TLC-MAMA.</p></div>}
-        <button className="btn btn-primary btn-block" disabled={!pick.length} onClick={() => { dispatch({ type: "symptom", entry: { week: state.profile.week, day: "Today", list: pick } }); setPick([]); notify("Symptoms saved"); }}>Save today</button>
+        <button className="btn btn-primary btn-block" disabled={!pick.length} onClick={() => { dispatch({ type: "symptom", entry: { ...stamp(state.profile), day: "Today", list: pick } }); setPick([]); notify("Symptoms saved"); }}>Save today</button>
       </div>
       <SectionHead title="Patterns over time" />
       <div className="card">
@@ -202,13 +226,20 @@ function SymptomLog() {
 export function Timeline() {
   const { state, nav } = useStore();
   const p = state.profile;
-  const day = p.stage === "Postpartum" ? 280 + p.week * 7 : p.week * 7;
+  // Counted from conception (about 2 weeks after the last period) to age two.
+  const day = dayOf1000(p);
   const phases = [
-    { id: "preg", name: "Pregnancy", range: "Days 1–280", from: 0, to: 280 },
-    { id: "fourth", name: "Fourth trimester", range: "Birth to 12 weeks", from: 280, to: 364 },
-    { id: "infant", name: "Infancy", range: "3 to 12 months", from: 364, to: 645 },
-    { id: "toddler", name: "Toddlerhood", range: "12 to 24 months", from: 645, to: 1000 },
+    { id: "preg", name: "Pregnancy", range: "About 266 days", from: 0, to: 266 },
+    { id: "fourth", name: "Fourth trimester", range: "Birth to 12 weeks", from: 266, to: 350 },
+    { id: "infant", name: "Infancy", range: "3 to 12 months", from: 350, to: 631 },
+    { id: "toddler", name: "Toddlerhood", range: "12 to 24 months", from: 631, to: 1000 },
   ];
+  const pp = isPP(p);
+  const visits = pp
+    ? [...state.visits.map((v) => ({ ...v, upcoming: false })),
+      { week: "pp3", title: "Postpartum check-in", note: "Within 3 weeks of birth: BP, bleeding, mood, feeding", upcoming: p.ppWeek < 3, label: "≤3 wk PP" },
+      { week: "pp12", title: "Comprehensive postpartum visit", note: "By 12 weeks: recovery, mood, chronic conditions, birth spacing", upcoming: p.ppWeek < 12, label: "≤12 wk PP" }]
+    : state.visits.map((v) => ({ ...v, upcoming: v.upcoming || v.week > p.week }));
   const weekly = state.weekly;
   return (
     <div>
@@ -254,16 +285,16 @@ export function Timeline() {
 
         <SectionHead title="Care along the way" />
         <div className="visits">
-          {state.visits.map((v) => (
+          {visits.map((v) => (
             <div key={v.week} className={"visit-row" + (v.upcoming ? " upcoming" : "")}>
-              <span className="v-week">Wk {v.week}</span>
+              <span className="v-week">{v.label || `Wk ${v.week}`}</span>
               <div><b>{v.title}</b><small>{v.note}</small></div>
               {v.upcoming ? <CalendarDays size={16} /> : <Check size={16} />}
             </div>
           ))}
         </div>
 
-        <SectionHead title="After birth" />
+        <SectionHead title={pp ? "You and your baby" : "After birth"} />
         <div className="tools">
           <button onClick={() => nav.go("baby")}><Baby size={20} /><b>Baby & growth</b><small>Growth, milestones and feeding</small></button>
           <button onClick={() => nav.go("postpartum")}><HeartPulse size={20} /><b>Postpartum care</b><small>Recovery, mood and blood pressure</small></button>
@@ -280,13 +311,36 @@ export function BabyScreen() {
   const [tab, setTab] = useState("Growth");
   const [kg, setKg] = useState("");
   const baby = state.baby;
+  const p = state.profile;
+  if (!isPP(p)) {
+    const b = babyThisWeek(p.week);
+    return (
+      <div>
+        <TopBar title="Baby & growth" />
+        <div className="pad">
+          <p className="eyebrow">Week {p.week} · {phase(p)}</p>
+          <h1 className="display-sm">Your baby is about the size of {b.size}.</h1>
+          <p className="muted">{b.note}</p>
+          <div className="card">
+            <p className="eyebrow">Coming up</p>
+            <ul className="dev-list">{!comingUp(p.week).length && <li><b>Any day now</b><span>Your baby could arrive any day. Stay close to your care team.</span></li>}{comingUp(p.week).map((c) => <li key={c.week}><b>Week {c.week}</b><span>About the size of {c.size}. {c.note}</span></li>)}</ul>
+          </div>
+          <div className="card soft"><p className="small">After your baby arrives, this is where you'll track growth on WHO charts, milestones and feeding. Switch to Postpartum in your profile when the time comes.</p></div>
+          <Disclaimer text="Sizes are approximate comparisons. Every baby grows at their own pace, and your provider checks growth at your visits." />
+        </div>
+      </div>
+    );
+  }
+  const months = Math.floor(p.ppWeek / 4.345);
+  const weights = baby.weights.filter((w, i) => w.month <= months || i >= 5);
+  const feeding = p.feeding || "Breastfeeding";
   return (
     <div>
       <TopBar title="Baby & growth" />
       <div className="pad">
-        <div className="preview-note"><Sparkles size={14} /> Preview with sample data. This opens up once your baby arrives.</div>
+        <div className="preview-note"><Sparkles size={14} /> Sample growth data for this prototype.</div>
         <h1 className="display-sm">Growing together, {baby.name}.</h1>
-        <p className="muted">{baby.age} · feeding: {baby.feeding}</p>
+        <p className="muted">{babyAge(p.ppWeek)} · feeding: {feeding.toLowerCase()}</p>
         <div className="seg-light">
           {["Growth", "Milestones", "Feeding"].map((t) => <button key={t} className={tab === t ? "on" : ""} onClick={() => setTab(t)}>{t}</button>)}
         </div>
@@ -297,7 +351,7 @@ export function BabyScreen() {
               <p className="eyebrow">Weight for age</p>
               <LineChart
                 xKey="month" xLabel="Month"
-                series={[{ label: baby.name, key: "kg", color: "#C7613A", data: baby.weights }]}
+                series={[{ label: baby.name, key: "kg", color: "#C7613A", data: weights }]}
                 bands={[{ label: "Typical", color: "rgba(122,138,90,.18)", data: BABY_GROWTH.map((g) => ({ month: g.month, lo: g.lo, hi: g.hi })) }]}
                 yMin={2} yMax={15} unit=" kg"
               />
@@ -353,7 +407,7 @@ export function BabyScreen() {
 
 /* ---------- Postpartum ---------- */
 export function Postpartum() {
-  const { nav } = useStore();
+  const { state, nav } = useStore();
   const items = [
     ["Blood pressure keeps mattering", "Preeclampsia can appear up to 6 weeks after birth. Amara keeps your BP tracking going and reminds you to check."],
     ["Mood check-ins", "The Edinburgh mood check your provider uses, plus support close by if you're feeling low or anxious. Postpartum depression affects about 1 in 8, and it's treatable."],
@@ -365,7 +419,7 @@ export function Postpartum() {
     <div>
       <TopBar title="Postpartum care" />
       <div className="pad">
-        <div className="preview-note"><Sparkles size={14} /> Preview of what continues after birth.</div>
+        {!isPP(state.profile) && <div className="preview-note"><Sparkles size={14} /> Preview of what continues after birth.</div>}
         <h1 className="display-sm">The fourth trimester, cared for.</h1>
         <div className="guide">
           {items.map(([a, b]) => <div key={a}><HeartPulse size={18} /><p><b>{a}</b>{b}</p></div>)}
@@ -463,11 +517,16 @@ export function HealthSnapshot() {
   const { state, nav } = useStore();
   const last = state.bp[state.bp.length - 1];
   const st = bpStatus(last.s, last.d);
+  const p = state.profile;
+  const pp = isPP(p);
+  const lw = state.weight[state.weight.length - 1];
+  const gain = lw?.gain ?? 0;
+  const wb = weightBand(lw?.week ?? p.week);
   return (
     <button className="card health-snap" onClick={() => nav.go("health")}>
       <div className="hs-item"><HeartPulse size={18} /><span><b>{last.s}/{last.d}</b><small>BP · {st.short}</small></span></div>
-      <div className="hs-item"><Scale size={18} /><span><b>+{state.weight[state.weight.length - 1].gain} lb</b><small>On track</small></span></div>
-      <div className="hs-item"><Activity size={18} /><span><b>{trimester(state.profile.week).split(" ")[0]}</b><small>Trimester</small></span></div>
+      <div className="hs-item"><Scale size={18} /><span><b>{gain > 0 ? "+" : ""}{gain} lb</b><small>{pp ? (lw?.pp != null ? "Since pre-pregnancy" : `Pregnancy wk ${lw?.week}`) : gain >= wb.lo && gain <= wb.hi ? "In typical range" : "Talk with provider"}</small></span></div>
+      <div className="hs-item"><Activity size={18} /><span><b>{pp ? stageLabel(p).split(" postpartum")[0] : phase(p).split(" ")[0]}</b><small>{pp ? "Postpartum" : "Trimester"}</small></span></div>
       <ArrowRight size={18} />
     </button>
   );

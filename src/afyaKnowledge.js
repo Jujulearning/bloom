@@ -1,3 +1,5 @@
+import { stageLabel } from "./stage";
+
 /* Afya's built-in knowledge, used when the live AI isn't available.
    Short, evidence-based answers (ACOG, CDC, NIH, USDA). Each topic lists trigger words; the best match wins. */
 
@@ -49,7 +51,7 @@ const SMALLTALK = [
   [/^(hi|hello|hey|good (morning|afternoon|evening)|yo|hola|akwaaba)\b/, (p) => `Hi ${p.name}! How are you feeling today? You can ask me anything, from what to eat tonight to how to handle heartburn.`],
   [/\b(thank|thanks|thx|appreciate)\b/, () => "You're so welcome. I'm here whenever you need me."],
   [/(who are you|what are you|what can you do|what do you do|are you (a )?(bot|ai|real|human))/, () => "I'm Afya, Amara's nutrition companion. I help with food, cravings, budget meals, symptoms that food can ease, and getting ready for your visits, always starting from the foods you already love. I'm an AI, not a clinician, so I'll point you to your care team for anything medical."],
-  [/(how are you|how's it going|how are things)/, (p) => `I'm doing well, thank you for asking! More importantly, how are you feeling at week ${p.week}?`],
+  [/(how are you|how's it going|how are things)/, (p) => `I'm doing well, thank you for asking! More importantly, how are you feeling at ${stageLabel(p).toLowerCase()}?`],
   [/\b(bye|goodnight|good night|see you|later)\b/, () => "Take care of yourself. I'll be right here when you need me."],
   [/\b(lol|haha|funny|joke)\b/, () => "Here's one: why did the plantain go to the party? Because it was ripe for fun. Okay, I'll stick to nutrition. 🌿"],
 ];

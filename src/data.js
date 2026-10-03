@@ -500,9 +500,9 @@ export const CHECKIN = [
 
 export const CHECKIN_FOCUS = {
   Energized: { nutrient: "Protein", title: "Make the most of a good day.", body: "When you have energy, a little batch-cooking now (a pot of beans or a tray of roasted sweet potatoes) makes tired days easier.", cta: "Find freezer-friendly meals", to: ["recipes", { filter: "Freezer friendly" }] },
-  Tired: { nutrient: "Iron", title: "Your iron needs increase during pregnancy.", body: "Your blood volume grows by almost half, so you need more iron to carry oxygen to you and your baby. Feeling tired is common, and iron-rich foods are one piece of the puzzle.", cta: "Find iron-rich foods", to: ["library", { nutrient: "Iron" }] },
+  Tired: { pp: { title: "Recovery takes real fuel.", body: "Caring for a newborn while your body heals is exhausting. Blood loss at birth can lower iron, so iron-rich foods, protein and fluids help, alongside rest whenever you can get it." }, nutrient: "Iron", title: "Your iron needs increase during pregnancy.", body: "Your blood volume grows by almost half, so you need more iron to carry oxygen to you and your baby. Feeling tired is common, and iron-rich foods are one piece of the puzzle.", cta: "Find iron-rich foods", to: ["library", { nutrient: "Iron" }] },
   Nauseous: { nutrient: "Hydration", title: "Gentle foods, small and often.", body: "An empty stomach can make nausea worse. Try small bites every few hours, plus sips of fluid between meals.", cta: "See nausea-friendly foods", to: ["library", { symptom: "Nauseous" }] },
-  Hungry: { nutrient: "Protein", title: "Your body is building.", body: "Hunger often rises in the second trimester. Protein and fiber together keep you fuller for longer.", cta: "Find filling meals", to: ["recipes", { filter: "High protein" }] },
+  Hungry: { pp: { title: "Your body is working hard.", body: "Healing and breastfeeding both raise your needs. Keep easy, protein-rich snacks within reach, and a glass of water each time you feed." }, nutrient: "Protein", title: "Your body is building.", body: "Hunger often rises in the second trimester. Protein and fiber together keep you fuller for longer.", cta: "Find filling meals", to: ["recipes", { filter: "High protein" }] },
   "Not sure": { nutrient: "Folate", title: "Small, steady choices add up.", body: "No need to overthink today. One leafy green and one protein you enjoy is a great start.", cta: "Explore foods from home", to: ["library", {}] },
 };
 
@@ -566,6 +566,10 @@ export const MAYA = {
   name: "Maya",
   stage: "Pregnant",
   week: 24,
+  // Used once she switches to Postpartum: weeks since birth, gestational week at birth, and feeding.
+  ppWeek: 6,
+  birthWeek: 39,
+  feeding: "Breastfeeding",
   cuisines: ["West African", "Ghanaian", "Caribbean"],
   loves: ["Plantain", "Jollof rice", "Beans", "Spinach", "Chicken"],
   avoids: ["Very spicy food (heartburn)"],

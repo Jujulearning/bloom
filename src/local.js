@@ -100,6 +100,10 @@ export function resourceGroups(zip) {
     { id: "housing", label: "Housing & bills", icon: "Building2", items: [
       { name: "211", detail: "Rent, utility and housing help near you.", links: [["Call 211", "tel:211"], [`Search near ${zip}`, `https://www.findhelp.org/search_results/${zip}`]] },
     ] },
+    { id: "orgs", label: "Maternal support", icon: "HandHeart", items: [
+      { name: "Healthy Start", detail: "Free, federally funded support during pregnancy and until your baby turns 18 months: care coordination, parenting help and referrals.", links: [["Find Healthy Start near me", "https://www.nationalhealthystart.org/find-services/"]] },
+      { name: "Community doulas & home visiting", detail: `Many programs offer doula support or nurse home visits at low or no cost near ${zip}.`, links: [[`Search near ${zip}`, `https://www.findhelp.org/search_results/${zip}`]] },
+    ] },
     { id: "supplies", label: "Baby supplies", icon: "Baby", items: [
       { name: "Diaper banks", detail: "Free diapers and wipes through the National Diaper Bank Network.", links: [["Member directory", "https://nationaldiaperbanknetwork.org/member-directory/"], [`Search near ${zip}`, `https://www.findhelp.org/search_results/${zip}`]] },
     ] },

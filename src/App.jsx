@@ -14,6 +14,7 @@ import { Nutrients } from "./Nutrients";
 import { Mood } from "./Mood";
 import { Health, Timeline, BabyScreen, Postpartum, Life } from "./Health";
 import { GetHelp, HelpButton } from "./Safety";
+import { stageLabel } from "./stage";
 
 const SCREENS = {
   home: Home, profile: Profile, mydata: MyData,
@@ -80,7 +81,7 @@ function Sidebar() {
       <div className="sb-brand"><AmaraLogo size={1.05} /></div>
       <button className="sb-me" onClick={() => nav.tab("profile")}>
         <Avatar who="maya" size={38} />
-        <span><b>{p.name}</b><small>{p.stage === "Postpartum" ? "Postpartum" : `Week ${p.week} · pregnant`}</small></span>
+        <span><b>{p.name}</b><small>{p.stage === "Postpartum" ? stageLabel(p) : `Week ${p.week} · pregnant`}</small></span>
       </button>
       <nav>
         {SIDE.map((g) => (

@@ -6,11 +6,7 @@ import { ONBOARD_CUISINES, DIET_PATTERNS, ALLERGIES, CONCERNS } from "./data";
 
 const STEPS = ["welcome", "stage", "week", "cuisines", "foods", "life", "concerns", "ready"];
 
-function dueDateFor(week) {
-  const d = new Date();
-  d.setDate(d.getDate() + (40 - week) * 7);
-  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-}
+import { dueDateFor, PREG_MIN, PREG_MAX, PP_MAX } from "./stage";
 
 export default function Onboarding() {
   const { state, dispatch } = useStore();
@@ -64,13 +60,26 @@ export default function Onboarding() {
 
       {step === "week" && (
         <Step title={p.stage === "Postpartum" ? "How old is your baby?" : "How far along are you?"} sub="An estimate is fine.">
-          <div className="week-picker">
-            <button className="round-btn" onClick={() => set({ week: Math.max(4, p.week - 1) })} aria-label="Fewer weeks"><Minus size={20} /></button>
-            <div><span className="week-num">{p.week}</span><span className="week-lbl">weeks</span></div>
-            <button className="round-btn" onClick={() => set({ week: Math.min(41, p.week + 1) })} aria-label="More weeks"><Plus size={20} /></button>
-          </div>
-          {p.stage !== "Postpartum" && <p className="center muted">Estimated due date · <b>{dueDateFor(p.week)}</b></p>}
-          <div className="stage-bar"><i style={{ width: `${(p.week / 40) * 100}%` }} /><span>1st</span><span>2nd</span><span>3rd</span></div>
+          {p.stage === "Postpartum" ? (
+            <>
+              <div className="week-picker">
+                <button className="round-btn" onClick={() => set({ ppWeek: Math.max(0, p.ppWeek - 1) })} aria-label="Fewer weeks"><Minus size={20} /></button>
+                <div><span className="week-num">{p.ppWeek}</span><span className="week-lbl">weeks old</span></div>
+                <button className="round-btn" onClick={() => set({ ppWeek: Math.min(PP_MAX, p.ppWeek + 1) })} aria-label="More weeks"><Plus size={20} /></button>
+              </div>
+              <p className="center muted">{p.ppWeek < 12 ? "You're in the fourth trimester, the first 12 weeks after birth." : "Amara supports you through your baby's first two years."}</p>
+            </>
+          ) : (
+            <>
+              <div className="week-picker">
+                <button className="round-btn" onClick={() => set({ week: Math.max(PREG_MIN, p.week - 1) })} aria-label="Fewer weeks"><Minus size={20} /></button>
+                <div><span className="week-num">{p.week}</span><span className="week-lbl">weeks</span></div>
+                <button className="round-btn" onClick={() => set({ week: Math.min(PREG_MAX, p.week + 1) })} aria-label="More weeks"><Plus size={20} /></button>
+              </div>
+              <p className="center muted">Estimated due date · <b>{dueDateFor(p.week)}</b></p>
+              <div className="stage-bar"><i style={{ width: `${(p.week / 40) * 100}%` }} /><span>1st</span><span>2nd</span><span>3rd</span></div>
+            </>
+          )}
         </Step>
       )}
 

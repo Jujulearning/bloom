@@ -1,6 +1,7 @@
 import { Phone, AlertTriangle, ShieldCheck, Lock, HeartHandshake, Hospital, MessageCircle, Check, X, ArrowRight, Info } from "lucide-react";
 import { useStore } from "./useStore";
 import { TopBar } from "./ui";
+import { isPP } from "./stage";
 
 /* What to do, by how urgent it is. Plain language, never a diagnosis. */
 const TIERS = [
@@ -20,6 +21,22 @@ const TIERS = [
     items: ["Feeling hopeless, numb, or not like yourself", "Anxiety or panic that won't settle", "Thoughts that scare you"],
     actions: [["Call or text 988", "tel:988"], ["1-833-TLC-MAMA", "tel:18338526262"]],
   },
+];
+
+/* After birth: AWHONN POST-BIRTH warning signs. */
+const PP_TIERS = [
+  {
+    id: "emergency", tone: "red", title: "Call 911 now", icon: AlertTriangle,
+    items: ["Chest pain", "Trouble breathing or shortness of breath", "A seizure", "Thoughts of hurting yourself or your baby"],
+    actions: [["Call 911", "tel:911"]],
+  },
+  {
+    id: "urgent", tone: "clay", title: "Call your provider today", icon: Hospital,
+    items: ["Bleeding that soaks a pad in an hour, or clots the size of an egg or bigger", "An incision that isn't healing, or is red or leaking", "A red or swollen leg that is painful or warm", "Fever of 100.4°F (38°C) or higher", "A headache that won't go away even after medicine, or with vision changes", "Blood pressure 140/90 or higher (160/110 or higher: go now)"],
+    actions: [["Call my provider", "tel:"]],
+    note: "Start by saying: \"I had a baby on [date].\" Warning signs can appear up to a year after birth, and preeclampsia up to 6 weeks.",
+  },
+  TIERS[2],
 ];
 
 export function EscalationCard({ kind, bp }) {
@@ -87,19 +104,21 @@ export function ScopeList() {
 }
 
 export function GetHelp() {
-  const { nav, notify } = useStore();
+  const { state, nav, notify } = useStore();
+  const tiers = isPP(state.profile) ? PP_TIERS : TIERS;
   return (
     <div>
       <TopBar title="Get help now" />
       <div className="pad">
         <h1 className="display-sm">Know when to reach out.</h1>
         <p className="muted">Trust yourself. If something feels wrong, it's always okay to call. You will never be a bother.</p>
-        {TIERS.map((t) => {
+        {tiers.map((t) => {
           const I = t.icon;
           return (
             <div key={t.id} className={"tier tier-" + t.tone}>
               <div className="tier-head"><I size={18} /><b>{t.title}</b></div>
               <ul>{t.items.map((i) => <li key={i}>{i}</li>)}</ul>
+              {t.note && <p className="small">{t.note}</p>}
               <div className="esc-actions">
                 {t.actions.map(([l, to]) => <a key={l} className="esc-call" href={to.length > 4 ? to : undefined} onClick={(e) => { if (to.length <= 4) { e.preventDefault(); notify("Use the number your care team gave you"); } }}><Phone size={14} /> {l}</a>)}
               </div>

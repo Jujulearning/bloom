@@ -4,7 +4,7 @@ import { bpStatus } from "./helpers";
 import { useStore } from "./useStore";
 import { TopBar, Nutrient, SectionHead, AfyaMark, Sheet, Empty } from "./ui";
 import { FOODS, CHECKIN } from "./data";
-import { trimester } from "./helpers";
+import { isPP, stageLabel, phase, babyThisWeek, postpartumThisWeek } from "./stage";
 import { SDOH_QUESTIONS } from "./data";
 
 const FOCUS = ["Explore iron-rich foods", "Try 3 different vegetables", "Prepare one freezer-friendly meal", "Ask provider about fatigue"];
@@ -20,15 +20,15 @@ export function Journey() {
     <div>
       <header className="journey-head">
         <p className="eyebrow light">My Journey</p>
-        <h1 className="display">Week {p.week}</h1>
-        <p>Your baby is growing quickly, and nutrients including iron, protein, and calcium continue to play important roles.</p>
+        <h1 className="display">{stageLabel(p)}</h1>
+        <p>{isPP(p) ? postpartumThisWeek(p.ppWeek) : `${babyThisWeek(p.week).note} Iron, protein and calcium keep playing important roles.`}</p>
         <div className="timeline">
           {["Pregnancy", "Birth", "Postpartum", "First foods", "Year two"].map((s, k) => (
-            <span key={s} className={k === 0 ? "now" : ""}><i />{s}</span>
+            <span key={s} className={k === (!isPP(p) ? 0 : p.ppWeek < 1 ? 1 : p.ppWeek < 26 ? 2 : p.ppWeek < 52 ? 3 : 4) ? "now" : ""}><i />{s}</span>
           ))}
         </div>
-        <div className="tri-bar light"><i style={{ width: `${(p.week / 40) * 100}%` }} /></div>
-        <small>{trimester(p.week)} · {40 - p.week} weeks to go</small>
+        <div className="tri-bar light"><i style={{ width: `${(isPP(p) ? Math.min(p.ppWeek / 104, 1) : p.week / 40) * 100}%` }} /></div>
+        <small>{phase(p)} · {isPP(p) ? `${Math.max(0, 104 - p.ppWeek)} weeks until age two` : p.week < 40 ? `${40 - p.week} weeks to your due date` : "past your due date, so stay close to your care team"}</small>
       </header>
 
       <div className="pad">
@@ -202,7 +202,7 @@ export function Summary() {
             <AfyaMark size={34} />
             <div><p className="eyebrow">Amara · prepared by {p.name}</p><h2 className="display-sm">{p.name}'s Nutrition Snapshot</h2></div>
           </div>
-          <div className="sum-meta"><span><b>Week {p.week}</b>{trimester(p.week)}</span><span><b>{p.diet}</b>Eating pattern</span><span><b>{p.cuisines[0]}</b>Food traditions</span></div>
+          <div className="sum-meta"><span><b>{stageLabel(p)}</b>{phase(p)}</span><span><b>{p.diet}</b>Eating pattern</span><span><b>{p.cuisines[0]}</b>Food traditions</span></div>
           <Sec inc={inc} setInc={setInc} k="bp" label="Blood pressure"><p>{state.bp.slice(-4).map((r) => `Wk ${r.week}: ${r.s}/${r.d}`).join(" · ")}</p><p className="small muted">Latest: {bpStatus(state.bp[state.bp.length - 1].s, state.bp[state.bp.length - 1].d).label.toLowerCase()} · gradual rise since week 12</p></Sec>
           <Sec inc={inc} setInc={setInc} k="concern" label="Recent concern"><p>Fatigue {recentTired ? `(reported tired on ${recentTired} of the last ${state.checkins.length} check-ins)` : ""}</p></Sec>
           <Sec inc={inc} setInc={setInc} k="focus" label="Nutrition focus"><p>Iron, with protein and folate</p></Sec>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from "react";
 import { POSTS, MAYA } from "./data";
-import { SEED_LOG } from "./nutrition";
+import { seedLog, migrateLog } from "./nutrition";
+import { PREG_MIN, PREG_MAX, PP_MAX } from "./stage";
 import { Ctx } from "./useStore";
 
 const KEY = "amara-demo-v2";
@@ -63,16 +64,25 @@ const initial = {
   community: { dms: false, showInRooms: true },
   zip: "",
   prenatal: "yes",
-  foodLog: SEED_LOG,
+  foodLog: seedLog(),
+  customFoods: {},
   epds: [],
 };
+
+// Keep stage and timing clinically consistent: pregnancy weeks 4–42, postpartum weeks 0–104.
+function clampProfile(p) {
+  const stage = ["Pregnant", "Postpartum"].includes(p.stage) ? p.stage : "Pregnant";
+  const n = (v, lo, hi, d) => Math.min(hi, Math.max(lo, Number.isFinite(+v) ? Math.round(+v) : d));
+  return { ...p, stage, week: n(p.week, PREG_MIN, PREG_MAX, 24), ppWeek: n(p.ppWeek, 0, PP_MAX, 6), birthWeek: n(p.birthWeek, 37, 42, 39) };
+}
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return initial;
     const s = { ...initial, ...JSON.parse(raw) };
-    if (!["Pregnant", "Postpartum"].includes(s.profile?.stage)) s.profile = { ...s.profile, stage: "Pregnant" };
+    s.profile = clampProfile({ ...MAYA, ...s.profile });
+    s.foodLog = migrateLog(s.foodLog);
     return s;
   } catch {
     return initial;
@@ -82,7 +92,7 @@ function load() {
 function reducer(s, a) {
   switch (a.type) {
     case "set": return { ...s, ...a.patch };
-    case "profile": return { ...s, profile: { ...s.profile, ...a.patch } };
+    case "profile": return { ...s, profile: clampProfile({ ...s.profile, ...a.patch }) };
     case "toggleIn": {
       const list = s[a.key];
       return { ...s, [a.key]: list.includes(a.id) ? list.filter((x) => x !== a.id) : [...list, a.id] };
@@ -124,6 +134,12 @@ function reducer(s, a) {
       d[a.id] = Math.max(0, (d[a.id] || 0) + a.delta);
       if (!d[a.id]) delete d[a.id];
       return { ...s, foodLog: { ...s.foodLog, [a.day]: d } };
+    }
+    case "logMeal": {
+      const d = { ...(s.foodLog[a.day] || {}) };
+      const customFoods = { ...s.customFoods };
+      a.items.forEach(({ id, food }) => { customFoods[id] = food; d[id] = 1; });
+      return { ...s, customFoods, foodLog: { ...s.foodLog, [a.day]: d } };
     }
     case "epds": return { ...s, epds: [...s.epds, { date: new Date().toISOString().slice(0, 10), score: a.score }] };
     case "sdoh": return { ...s, sdoh: { ...s.sdoh, ...a.patch } };
