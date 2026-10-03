@@ -131,8 +131,8 @@ function Shell() {
   if (splash) {
     return (
       <div className="splash" onClick={() => setSplash(false)}>
-        <div className="splash-mark"><AfyaMark size={64} /></div>
-        <AmaraLogo light size={1.6} />
+        <img className="splash-mark" src="/brand/amara-tree-icon-512.png" alt="Amara Health" width="112" height="112" />
+        <span className="logo light" style={{ fontSize: "1.6em" }}><span className="logo-word">amara</span><span className="logo-sub">health</span></span>
         <p>Nourished by culture. Rooted in science.</p>
       </div>
     );

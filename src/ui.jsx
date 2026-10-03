@@ -91,11 +91,7 @@ export function RoleBadge({ who }) {
 export function AfyaMark({ size = 36 }) {
   return (
     <span className="afya-mark" style={{ width: size, height: size }}>
-      <svg viewBox="0 0 40 40" width={size * 0.62} height={size * 0.62} aria-hidden="true">
-        <path d="M20 34c0-9 0-15 0-22" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-        <path d="M20 20c-6 0-10-4-10-10 6 0 10 4 10 10Z" fill="currentColor" opacity=".9" />
-        <path d="M20 16c5 0 9-3 9-9-5 0-9 3-9 9Z" fill="currentColor" opacity=".65" />
-      </svg>
+      <img src="/brand/amara-tree-sm.png" alt="" width={Math.round(size * 0.82)} height={Math.round(size * 0.61)} />
     </span>
   );
 }
@@ -103,6 +99,9 @@ export function AfyaMark({ size = 36 }) {
 export function AmaraLogo({ light = false, size = 1 }) {
   return (
     <span className={"logo" + (light ? " light" : "")} style={{ fontSize: `${size}em` }}>
+      {light
+        ? <img className="logo-icon" src="/brand/amara-tree-icon-192.png" alt="" />
+        : <img className="logo-tree" src="/brand/amara-tree-sm.png" alt="" />}
       <span className="logo-word">amara</span>
       <span className="logo-sub">health</span>
     </span>
