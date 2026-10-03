@@ -43,8 +43,10 @@ export async function healthCenters(place) {
     const rows = await near(HRSA, "HCC_STATUS_DESC='Active' AND HCC_LOC_SETTING_DESC<>'School'",
       "SITE_NM,SITE_PHONE_NUM,SITE_URL,SITE_ADDRESS,SITE_CITY,SITE_STATE_ABBR,SITE_ZIP_CD,GRANTEE_NM", place, radius, 200);
     if (rows.length || radius === 25) {
-      return rows.slice(0, 6).map((x) => ({
-        name: x.SITE_NM, org: titleCase(x.GRANTEE_NM), phone: x.SITE_PHONE_NUM, url: cleanUrl(x.SITE_URL),
+      const seen = new Set();
+      const fixed = rows.filter((x) => !/mobile|van\b|unit\b/i.test(x.SITE_NM));
+      return (fixed.length ? fixed : rows).filter((x) => !seen.has(x.SITE_ADDRESS) && seen.add(x.SITE_ADDRESS)).slice(0, 6).map((x) => ({
+        name: x.SITE_NM === x.SITE_NM.toUpperCase() ? titleCase(x.SITE_NM) : x.SITE_NM, org: titleCase(x.GRANTEE_NM), phone: x.SITE_PHONE_NUM, url: cleanUrl(x.SITE_URL),
         address: `${x.SITE_ADDRESS}, ${x.SITE_CITY}, ${x.SITE_STATE_ABBR} ${String(x.SITE_ZIP_CD || "").slice(0, 5)}`, mi: x.mi,
       }));
     }
