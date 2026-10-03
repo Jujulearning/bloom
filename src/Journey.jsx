@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { ArrowRight, Check, ClipboardList, CalendarDays, Sprout, Droplet, Plus, Trash2, Share2, FileText, Lock, ChevronRight, MapPin, Phone, ShoppingBasket, Stethoscope, Bus, HeartHandshake, Baby, Building2, HandHeart, Sparkles, HeartPulse, CalendarRange } from "lucide-react";
+import { ArrowRight, Check, ClipboardList, CalendarDays, Sprout, Droplet, Plus, Trash2, Share2, FileText, Lock, ChevronRight, Stethoscope, HeartHandshake, Baby, Sparkles, HeartPulse, CalendarRange } from "lucide-react";
 import { bpStatus } from "./helpers";
 import { useStore } from "./useStore";
-import { TopBar, Nutrient, SectionHead, Disclaimer, AfyaMark, Photo, Sheet, Empty } from "./ui";
-import { RESOURCES, FOODS, CHECKIN } from "./data";
+import { TopBar, Nutrient, SectionHead, AfyaMark, Sheet, Empty } from "./ui";
+import { FOODS, CHECKIN } from "./data";
 import { trimester } from "./helpers";
 import { SDOH_QUESTIONS } from "./data";
 
-const ICONS = { ShoppingBasket, Stethoscope, Bus, HeartHandshake, Baby, Building2, HandHeart };
 const FOCUS = ["Explore iron-rich foods", "Try 3 different vegetables", "Prepare one freezer-friendly meal", "Ask provider about fatigue"];
 const moodEmoji = (m) => CHECKIN.find((c) => c.id === m)?.emoji || "🤍";
 
@@ -235,41 +234,4 @@ export function Summary() {
   );
 }
 
-export function Support({ open: open0 = null }) {
-  const { notify } = useStore();
-  const [open, setOpen] = useState(open0);
-  const cat = RESOURCES.find((r) => r.id === open);
-  return (
-    <div>
-      <TopBar title="Support Near You" />
-      <div className="pad">
-        <Photo name="g-community-meal" pos="50% 30%" h={150} />
-        <h1 className="display-sm" style={{ marginTop: 18 }}>Need a little extra support?</h1>
-        <p className="muted">Pregnancy comes with enough to think about. Amara can help you find resources in your community.</p>
-        <div className="loc"><MapPin size={15} /> Showing resources near <b>Baltimore, MD</b> <button className="link" onClick={() => notify("Location updated")}>Change</button></div>
-        <div className="res-grid">
-          {RESOURCES.map((r) => {
-            const I = ICONS[r.icon] || HandHeart;
-            return <button key={r.id} onClick={() => setOpen(r.id)}><I size={20} /><span>{r.label}</span></button>;
-          })}
-        </div>
-        <div className="card soft">
-          <p className="eyebrow"><Phone size={12} /> Anytime, day or night</p>
-          <p><b>National Maternal Mental Health Hotline</b><br />Call or text 1-833-TLC-MAMA (1-833-852-6262)</p>
-          <p className="muted small">If you are in crisis, call or text 988. In an emergency, call 911.</p>
-        </div>
-        <Disclaimer text="Resource details are examples for this prototype. Availability and eligibility vary by location." />
-      </div>
-      <Sheet open={!!cat} onClose={() => setOpen(null)} title={cat?.label}>
-        {cat?.items.map((it) => (
-          <div key={it.name} className="res-item">
-            <b>{it.name}</b>
-            <p className="muted small">{it.detail}</p>
-            <button className="link" onClick={() => notify(`${it.action} (demo)`)}>{it.action} <ChevronRight size={14} /></button>
-          </div>
-        ))}
-      </Sheet>
-    </div>
-  );
-}
 

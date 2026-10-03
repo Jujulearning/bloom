@@ -64,7 +64,7 @@ export const FOODS = [
     id: "black-eyed-peas", name: "Black-eyed peas", cuisine: "southern", origin: "West Africa & the American South", meal: "Any meal",
     img: "g-ingredients", pos: "55% 60%",
     nutrients: ["Folate", "Iron", "Protein", "Fiber"],
-    stages: ["Pregnancy", "Planning", "Postpartum"], symptoms: ["Tired"], budget: true, time: 30, diet: ["Vegetarian", "Vegan"],
+    stages: ["Pregnancy", "Postpartum"], symptoms: ["Tired"], budget: true, time: 30, diet: ["Vegetarian", "Vegan"],
     context: "Carried from West Africa to the American South, black-eyed peas star in red-red, akara and the New Year's Hoppin' John. They mean luck, and they mean home.",
     why: "One cup cooked gives you more than half of your daily folate in pregnancy, plus iron, protein and fiber.",
     considerations: ["Canned is great. Rinse to cut the salt.", "If beans cause gas, start with smaller portions and add more over time."],
@@ -112,7 +112,7 @@ export const FOODS = [
     id: "sweet-potato", name: "Sweet potato", cuisine: "southern", origin: "Global", meal: "Any meal",
     img: "g-ingredients", pos: "85% 85%",
     nutrients: ["Vitamin A", "Fiber", "Potassium", "Vitamin C"],
-    stages: ["Pregnancy", "Postpartum", "Planning"], symptoms: ["Nauseous", "Hungry"], budget: true, time: 40, diet: ["Vegetarian", "Vegan"],
+    stages: ["Pregnancy", "Postpartum"], symptoms: ["Nauseous", "Hungry"], budget: true, time: 40, diet: ["Vegetarian", "Vegan"],
     context: "From candied yams in the South to roasted street-side sweet potatoes across Africa and Asia, this root shows up on tables everywhere.",
     why: "Sweet potato gives you beta-carotene, which your body turns into vitamin A as it needs it, along with fiber and potassium.",
     considerations: ["Vitamin A from foods like sweet potato is safe in pregnancy. High-dose vitamin A supplements are not, so check your prenatal vitamin with your provider."],
@@ -124,7 +124,7 @@ export const FOODS = [
     id: "lentils", name: "Lentils", cuisine: "south-asian", origin: "South Asia, the Middle East & Ethiopia", meal: "Lunch & dinner",
     img: "g-traditional-ingredients", pos: "60% 60%",
     nutrients: ["Folate", "Iron", "Protein", "Fiber"],
-    stages: ["Pregnancy", "Planning", "Postpartum"], symptoms: ["Tired"], budget: true, time: 25, diet: ["Vegetarian", "Vegan"],
+    stages: ["Pregnancy", "Postpartum"], symptoms: ["Tired"], budget: true, time: 25, diet: ["Vegetarian", "Vegan"],
     context: "Dal in South Asia, mujadara in the Middle East, misir wot in Ethiopia. Lentils are comfort food for much of the world.",
     why: "One cup of cooked lentils has about 18 g of protein, roughly a quarter of your daily iron needs in pregnancy, and more than half of your folate.",
     considerations: ["Squeeze in lemon or add tomatoes. Vitamin C helps you absorb the iron.", "Try to have tea and coffee between meals instead of with them, since they can reduce iron absorption."],
@@ -184,7 +184,7 @@ export const FOODS = [
     id: "avocado", name: "Avocado", cuisine: "latin-american", origin: "Mexico & Central America", meal: "Any meal",
     img: "g-meal-bowl", pos: "85% 55%",
     nutrients: ["Folate", "Potassium", "Healthy fats", "Fiber"],
-    stages: ["Pregnancy", "Planning", "Postpartum"], symptoms: ["Nauseous"], budget: false, time: 2, diet: ["Vegetarian", "Vegan"],
+    stages: ["Pregnancy", "Postpartum"], symptoms: ["Nauseous"], budget: false, time: 2, diet: ["Vegetarian", "Vegan"],
     context: "Avocado is the base of guacamole and a staple from Mexico to Ghana, where it's often eaten with bread or gari.",
     why: "Avocado gives you folate, potassium and healthy fats that help you absorb fat-soluble vitamins.",
     considerations: ["Wash the skin before cutting."],
@@ -475,38 +475,6 @@ export const EVENTS = [
   { id: "e2", title: "Around the Table: Sunday cook-along (jollof!)", host: "The Village", when: "Sun, Oct 11 · 4:00 PM ET", kind: "Cook-along", img: "g-west-african-stew", pos: "50% 40%", going: 142 },
   { id: "e3", title: "Second Trimester Circle meetup", host: "Moderated by Amara", when: "Tue, Oct 13 · 8:00 PM ET", kind: "Virtual circle", img: "g-community-meal", pos: "50% 40%", going: 38 },
   { id: "e4", title: "Postpartum nourishment with grandmother wisdom", host: "Culture & Motherhood", when: "Sat, Oct 17 · 11:00 AM ET", kind: "Story circle", img: "g-grandmother-teaching", pos: "50% 30%", going: 64 },
-];
-
-export const RESOURCES = [
-  { id: "food", label: "Food support", icon: "ShoppingBasket", items: [
-    { name: "WIC", detail: "Healthy foods, nutrition support and breastfeeding help for pregnant and postpartum women and young children.", action: "Check eligibility" },
-    { name: "SNAP", detail: "Monthly grocery benefits. Pregnancy can affect eligibility and benefit amount.", action: "Learn how to apply" },
-    { name: "Local food banks", detail: "Find free groceries near you through Feeding America's food bank finder.", action: "Find nearby" },
-  ]},
-  { id: "health", label: "Healthcare", icon: "Stethoscope", items: [
-    { name: "Community health centers", detail: "Prenatal care on a sliding-fee scale, whatever your insurance status.", action: "Find a health center" },
-    { name: "Medicaid in pregnancy", detail: "Many states extend coverage through 12 months postpartum.", action: "Check your state" },
-  ]},
-  { id: "transport", label: "Transportation", icon: "Bus", items: [
-    { name: "Rides to appointments", detail: "Medicaid often covers non-emergency rides to prenatal visits.", action: "See options" },
-  ]},
-  { id: "mental", label: "Mental wellness", icon: "HeartHandshake", items: [
-    { name: "National Maternal Mental Health Hotline", detail: "Free, confidential support 24/7 by call or text, in English and Spanish: 1-833-TLC-MAMA (1-833-852-6262).", action: "Call or text" },
-    { name: "Postpartum Support International", detail: "HelpLine 1-800-944-4773, plus peer support groups.", action: "Get support" },
-  ]},
-  { id: "lactation", label: "Lactation support", icon: "Baby", items: [
-    { name: "WIC breastfeeding peer counselors", detail: "Mothers who've been there, available by phone.", action: "Connect" },
-    { name: "La Leche League", detail: "Free local and virtual meetings.", action: "Find a meeting" },
-  ]},
-  { id: "housing", label: "Housing", icon: "Building2", items: [
-    { name: "211", detail: "Call or text 211 for local housing, utility and rent help.", action: "Call 211" },
-  ]},
-  { id: "supplies", label: "Baby supplies", icon: "Baby", items: [
-    { name: "Diaper banks", detail: "Free diapers and wipes in many communities.", action: "Find nearby" },
-  ]},
-  { id: "orgs", label: "Maternal support organizations", icon: "HandHeart", items: [
-    { name: "Community doulas", detail: "Many programs offer doula support at low or no cost.", action: "Explore" },
-  ]},
 ];
 
 // Afya scripted guidance

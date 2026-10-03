@@ -119,7 +119,7 @@ export function Library(params) {
             <p className="field-label">Symptom</p>
             <div className="chips">{["Tired", "Nauseous", "Hungry"].map((n) => <Chip small key={n} active={symptom === n} onClick={() => setSymptom(symptom === n ? null : n)}>{n}</Chip>)}</div>
             <p className="field-label">Stage</p>
-            <div className="chips">{["Planning", "Pregnancy", "Postpartum"].map((n) => <Chip small key={n} active={stage === n} onClick={() => setStage(stage === n ? null : n)}>{n}</Chip>)}</div>
+            <div className="chips">{["Pregnancy", "Postpartum"].map((n) => <Chip small key={n} active={stage === n} onClick={() => setStage(stage === n ? null : n)}>{n}</Chip>)}</div>
             <p className="field-label">Practical</p>
             <div className="chips">
               <Chip small active={budget} onClick={() => setBudget(!budget)}>Budget friendly</Chip>

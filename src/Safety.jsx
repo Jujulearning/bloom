@@ -121,10 +121,11 @@ export function RiskCards({ signals, max = 3 }) {
   const { dispatch, nav, notify } = useStore();
   if (!signals.length) return null;
   const act = (to) => {
-    if (to === "urgent" || to === "health" || to === "budget") return nav.go(to);
+    if (["urgent", "health", "budget", "nutrients", "mood"].includes(to)) return nav.go(to);
     if (to.startsWith("support:")) return nav.go("support", { open: to.split(":")[1] });
     if (to.startsWith("library:")) return nav.go("library", { nutrient: to.split(":")[1] });
     if (to === "addq:iron") { dispatch({ type: "addQ", text: "I've been more tired than usual. Should we check my iron?", from: "Afya" }); return notify("Added to For My Visit"); }
+    if (to === "addq:mood") { dispatch({ type: "addQ", text: "I've been struggling with my mood. Can we talk about how I'm feeling and what support is available?", from: "Mood check" }); return notify("Added to For My Visit"); }
     if (to === "addq:bp") { dispatch({ type: "addQ", text: "My blood pressure has been creeping up. Is that something to watch?", from: "Health" }); return notify("Added to For My Visit"); }
   };
   return (

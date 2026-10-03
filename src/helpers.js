@@ -1,3 +1,4 @@
+import { analyzeNutrients } from "./nutrition";
 import { GROCERY_BASE } from "./data";
 
 export function trimester(week) {
@@ -101,6 +102,11 @@ export function riskSignals(state) {
   if (state.symptoms.flatMap((s) => s.list).filter((x) => x === "Feeling low").length >= 2 || ["More than half the days", "Nearly every day"].includes(state.sdoh.answers.stress)) out.push({ level: "watch", id: "mood", title: "You've been carrying a lot lately.", body: "Feeling low or anxious in pregnancy is common and treatable. You deserve support: talk with your provider, or call or text 1-833-TLC-MAMA any time.", actions: [["Mental wellness support", "support:mental"]] });
   const tired = state.checkins.filter((c) => c.mood === "Tired").length;
   if (tired >= 3) out.push({ level: "info", id: "tired", title: `You've checked in tired ${tired} times this week.`, body: "Pregnancy fatigue is common, and it's also worth asking whether your iron should be checked.", actions: [["Add the iron question", "addq:iron"], ["Iron-rich foods I know", "library:Iron"]] });
+  const ep = state.epds?.[state.epds.length - 1];
+  if (ep && ep.score >= 13) out.push({ level: "high", id: "epds", title: "Your last mood check suggests you may be living with depression.", body: "It isn't a diagnosis, and it's very treatable. Please talk with your provider this week. You can call or text 1-833-TLC-MAMA any time.", actions: [["Mood support", "mood"], ["Add to For My Visit", "addq:mood"]] });
+  else if (ep && ep.score >= 10) out.push({ level: "watch", id: "epds", title: "Your last mood check showed some signs of depression.", body: "Worth bringing up with your provider, and checking in again in two weeks.", actions: [["Mood support", "mood"], ["Add to For My Visit", "addq:mood"]] });
+  const nut = analyzeNutrients(state);
+  if (nut.days && nut.gaps.length) out.push({ level: "info", id: "nutrients", title: `Your meals look light on ${nut.gaps.slice(0, 3).map((g) => g.short).join(", ").replace(/, ([^,]*)$/, " and $1")}.`, body: "Based on your food log. A few foods from your own table can help, and you can ask your provider whether a supplement makes sense.", actions: [["See my nutrient check", "nutrients"]] });
   if (state.sdoh.done && ["Often", "Sometimes"].includes(state.sdoh.answers.food)) out.push({ level: "info", id: "food", title: "Groceries have been tight.", body: "WIC and SNAP can help, and your budget planner builds around foods you already love.", actions: [["See food support", "support:food"], ["Budget planner", "budget"]] });
   return out;
 }

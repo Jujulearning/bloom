@@ -356,7 +356,7 @@ export function Postpartum() {
   const { nav } = useStore();
   const items = [
     ["Blood pressure keeps mattering", "Preeclampsia can appear up to 6 weeks after birth. Amara keeps your BP tracking going and reminds you to check."],
-    ["Mood check-ins", "Gentle weekly check-ins, with support close by if you're feeling low or anxious."],
+    ["Mood check-ins", "The Edinburgh mood check your provider uses, plus support close by if you're feeling low or anxious. Postpartum depression affects about 1 in 8, and it's treatable."],
     ["Recovery nourishment", "Warm, iron- and protein-rich foods from your traditions: soups, stews, congee, light soups and more."],
     ["Feeding support", "Breastfeeding, formula or both, with lactation resources near you."],
     ["Your 6-week visit", "A snapshot of your recovery, BP and mood to share with your provider."],
@@ -374,7 +374,8 @@ export function Postpartum() {
           <p className="eyebrow"><Phone size={12} /> Anytime</p>
           <p>National Maternal Mental Health Hotline: call or text 1-833-TLC-MAMA (1-833-852-6262).</p>
         </div>
-        <button className="btn btn-primary btn-block" onClick={() => nav.go("baby")}>See Baby & growth <ArrowRight size={16} /></button>
+        <button className="btn btn-primary btn-block" onClick={() => nav.go("mood")}>Take the 2-minute mood check <ArrowRight size={16} /></button>
+        <button className="btn btn-ghost btn-block" style={{ marginTop: 10 }} onClick={() => nav.go("baby")}>See Baby & growth <ArrowRight size={16} /></button>
       </div>
     </div>
   );

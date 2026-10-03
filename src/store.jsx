@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState, useCallback } from "react";
 import { POSTS, MAYA } from "./data";
+import { SEED_LOG } from "./nutrition";
 import { Ctx } from "./useStore";
 
 const KEY = "amara-demo-v2";
@@ -60,13 +61,19 @@ const initial = {
   privacy: { shareWithProvider: false, anonymousDefault: false, showWeek: true, personalization: true, research: false },
   notifications: { checkins: true, village: true, tips: true, appointments: true },
   community: { dms: false, showInRooms: true },
+  zip: "",
+  prenatal: "yes",
+  foodLog: SEED_LOG,
+  epds: [],
 };
 
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return initial;
-    return { ...initial, ...JSON.parse(raw) };
+    const s = { ...initial, ...JSON.parse(raw) };
+    if (!["Pregnant", "Postpartum"].includes(s.profile?.stage)) s.profile = { ...s.profile, stage: "Pregnant" };
+    return s;
   } catch {
     return initial;
   }
@@ -112,6 +119,13 @@ function reducer(s, a) {
     case "babyWeight": { const w = s.baby.weights; return { ...s, baby: { ...s.baby, weights: [...w, { month: w[w.length - 1].month + 1, kg: a.kg }] } }; }
     case "milestone": { const m = s.baby.milestones; return { ...s, baby: { ...s.baby, milestones: m.includes(a.id) ? m.filter((x) => x !== a.id) : [...m, a.id] } }; }
     case "feed": return { ...s, baby: { ...s.baby, feeds: [...s.baby.feeds, a.feed] } };
+    case "foodLog": {
+      const d = { ...(s.foodLog[a.day] || {}) };
+      d[a.id] = Math.max(0, (d[a.id] || 0) + a.delta);
+      if (!d[a.id]) delete d[a.id];
+      return { ...s, foodLog: { ...s.foodLog, [a.day]: d } };
+    }
+    case "epds": return { ...s, epds: [...s.epds, { date: new Date().toISOString().slice(0, 10), score: a.score }] };
     case "sdoh": return { ...s, sdoh: { ...s.sdoh, ...a.patch } };
     case "reset": return { ...initial };
     default: return s;

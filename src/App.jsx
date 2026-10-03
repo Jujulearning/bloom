@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { House, Compass, Users, Route, Check, HeartPulse, CalendarRange, Baby, ClipboardList, HandHeart, MapPin, User } from "lucide-react";
+import { House, Compass, Users, Route, Check, HeartPulse, CalendarRange, Baby, ClipboardList, HandHeart, MapPin, User, Apple, Smile } from "lucide-react";
 import { StoreProvider } from "./store";
 import { useStore } from "./useStore";
 import { AfyaMark, AmaraLogo, Avatar } from "./ui";
@@ -8,7 +8,10 @@ import { Home, Profile, MyData } from "./Home";
 import { Explore, Library, Search, FoodPage, Recipes, RecipePage, BuildPlate, Budget, Grocery } from "./Explore";
 import { Afya, AfyaPlan } from "./Afya";
 import { Village, Rooms, Room, Thread, Compose, Events, Guidelines } from "./Village";
-import { Journey, Reflection, Visit, Summary, Support } from "./Journey";
+import { Journey, Reflection, Visit, Summary } from "./Journey";
+import { Support } from "./Support";
+import { Nutrients } from "./Nutrients";
+import { Mood } from "./Mood";
 import { Health, Timeline, BabyScreen, Postpartum, Life } from "./Health";
 import { GetHelp, HelpButton } from "./Safety";
 
@@ -19,6 +22,7 @@ const SCREENS = {
   village: Village, rooms: Rooms, room: Room, thread: Thread, compose: Compose, events: Events, guidelines: Guidelines,
   journey: Journey, reflection: Reflection, visit: Visit, summary: Summary, support: Support,
   health: Health, timeline: Timeline, baby: BabyScreen, postpartum: Postpartum, life: Life, urgent: GetHelp,
+  nutrients: Nutrients, mood: Mood,
 };
 
 const TABS = [
@@ -39,6 +43,8 @@ const SIDE = [
   ] },
   { group: "My health", items: [
     { id: "health", label: "Blood pressure & tracking", Icon: HeartPulse },
+    { id: "nutrients", label: "Nutrient check", Icon: Apple },
+    { id: "mood", label: "Mood & wellbeing", Icon: Smile },
     { id: "timeline", label: "My 1,000 days", Icon: CalendarRange },
     { id: "baby", label: "Baby & growth", Icon: Baby },
     { id: "visit", label: "For My Visit", Icon: ClipboardList },

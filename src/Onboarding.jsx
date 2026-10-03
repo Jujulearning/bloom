@@ -54,7 +54,7 @@ export default function Onboarding() {
 
       {step === "stage" && (
         <Step title="Where are you in your journey?" sub="We'll shape everything around this. You can change it anytime.">
-          {[["Pregnant", "Expecting a baby"], ["Postpartum", "My baby is here"], ["Planning for pregnancy", "Getting ready"]].map(([v, d]) => (
+          {[["Pregnant", "Expecting a baby"], ["Postpartum", "My baby is here"]].map(([v, d]) => (
             <button key={v} className={"choice" + (p.stage === v ? " on" : "")} onClick={() => set({ stage: v })}>
               <b>{v}</b><small>{d}</small>
             </button>

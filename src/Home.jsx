@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, Bell, ChevronRight, Utensils, Wallet, ClipboardList, MapPin, Droplet, Minus, Plus, Lock, Download, Trash2, RefreshCw, Sparkles, HeartPulse, HandHeart, CalendarRange } from "lucide-react";
+import { ArrowRight, Bell, ChevronRight, Utensils, Wallet, ClipboardList, MapPin, Droplet, Minus, Plus, Lock, Download, Trash2, RefreshCw, Sparkles, HeartPulse, HandHeart, CalendarRange, Apple, Smile } from "lucide-react";
 import { HealthSnapshot } from "./Health";
 import { RiskCards, HelpButton } from "./Safety";
 import { riskSignals } from "./helpers";
@@ -164,6 +164,8 @@ export function Home() {
         <button onClick={() => nav.go("support")}><MapPin size={20} /><b>Support near you</b><small>A little extra support</small></button>
         <button onClick={() => nav.go("health")}><HeartPulse size={20} /><b>Blood pressure</b><small>Log a reading, see your trend</small></button>
         <button onClick={() => nav.go("timeline")}><CalendarRange size={20} /><b>My 1,000 days</b><small>Your journey over time</small></button>
+        <button onClick={() => nav.go("nutrients")}><Apple size={20} /><b>Nutrient check</b><small>Am I getting enough?</small></button>
+        <button onClick={() => nav.go("mood")}><Smile size={20} /><b>Mood check</b><small>2 minutes, just for you</small></button>
       </div>
 
       <button className="card support-card" onClick={() => nav.go("life")}>
@@ -212,7 +214,7 @@ export function Profile() {
             <button className="round-btn" onClick={() => set({ week: Math.min(41, p.week + 1) })} aria-label="Next week"><Plus size={18} /></button>
           </div>
           <div className="chips center-chips">
-            {["Pregnant", "Postpartum", "Planning for pregnancy"].map((s) => <Chip small key={s} active={p.stage === s} onClick={() => set({ stage: s })}>{s}</Chip>)}
+            {["Pregnant", "Postpartum"].map((s) => <Chip small key={s} active={p.stage === s} onClick={() => set({ stage: s })}>{s}</Chip>)}
           </div>
         </div>
 
